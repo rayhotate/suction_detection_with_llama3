@@ -255,24 +255,24 @@ No examples of true negatives found in the dataset.
 
 ### Notable Disagreements
 
-**Image**: `#9 How to perform oral suctioning_frame_93.jpg`
-- **Human Evaluation**: Oral Suctioning
+**Image**: `#9 How to perform oral suctioning_frame_32.jpg`
+- **Human Evaluation**: No Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_0.jpg`
-- **Human Evaluation**: No Suctioning
-- **LLM Evaluation**: Oral Suctioning
-- **LLM Reasoning**: {}...
+**Image**: `Oral suctioning_frame_12.jpg`
+- **Human Evaluation**: Oral Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
+- **LLM Reasoning**: {'observation': "** The image shows a woman in a blue shirt and black pants, wearing gloves and a mask, standing next to a hospital bed with a mannequin inside. The woman is holding a tube that is con...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `Suctioning the endotracheal tube - medical animation_frame_18.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_31.jpg`
 - **Human Evaluation**: Oral Suctioning
 - **LLM Evaluation**: No Suctioning
-- **LLM Reasoning**: {'observation': "** The image depicts a medical professional, dressed in gloves and a black top, using a specialized tool to examine a patient's airway. The patient is positioned on their back, covere...
+- **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
