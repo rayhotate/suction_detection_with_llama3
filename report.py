@@ -48,6 +48,34 @@ def generate_confusion_matrix(merged_df, f):
     f.write("\n### Confusion Matrix\n")
     f.write("![Confusion Matrix](assets/confusion_matrix.png)\n\n")
 
+def calculate_video_metrics(merged_df, video_name):
+    # Filter dataframe for specific video
+    video_df = merged_df[merged_df['Image'].str.startswith(video_name)]
+    
+    if len(video_df) == 0:
+        return None
+        
+    # Calculate metrics
+    accuracy = accuracy_score(video_df['human_evaluation'], video_df['llm_evaluation'])
+    conf_matrix = confusion_matrix(
+        video_df['human_evaluation'], 
+        video_df['llm_evaluation'],
+        labels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning']
+    )
+    class_report = classification_report(
+        video_df['human_evaluation'], 
+        video_df['llm_evaluation'],
+        labels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'],
+        output_dict=True
+    )
+    
+    return {
+        'total_frames': len(video_df),
+        'accuracy': accuracy,
+        'confusion_matrix': conf_matrix,
+        'classification_report': class_report
+    }
+
 def generate_report():
     # Read results
     llm_df = pd.read_csv('llm_result.tsv', sep='\t')
@@ -196,6 +224,9 @@ def generate_report():
         # Add image examples
         add_image_examples(f, merged_df, disagreements_df)
         
+        # Add per-video results
+        write_video_results(f, merged_df, video_sources)
+        
         # Recommendations
         f.write("\n## Recommendations\n")
         f.write("1. **Model Improvements**\n")
@@ -309,6 +340,49 @@ def write_classification_report(f, class_report):
     for class_name in ['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning']:
         metrics = class_report[class_name]
         f.write(f"| {class_name} | {metrics['precision']:.3f} | {metrics['recall']:.3f} | {metrics['f1-score']:.3f} | {metrics['support']} |\n")
+
+def write_video_results(f, merged_df, video_sources):
+    f.write("\n## Per-Video Analysis\n\n")
+    
+    for video_url in video_sources:
+        # Extract video name from URL
+        video_name = video_url.split(']')[0].replace('[', '')
+        metrics = calculate_video_metrics(merged_df, video_name)
+        
+        if metrics is None:
+            continue
+            
+        f.write(f"### {video_name}\n")
+        f.write(f"- **Total Frames**: {metrics['total_frames']}\n")
+        f.write(f"- **Accuracy**: {metrics['accuracy']:.2%}\n\n")
+        
+        # Add classification report
+        f.write("#### Classification Report\n")
+        f.write("| Class | Precision | Recall | F1-Score | Support |\n")
+        f.write("|-------|-----------|---------|-----------|----------|\n")
+        for class_name in ['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning']:
+            metrics_data = metrics['classification_report'].get(class_name, {})
+            if metrics_data.get('support', 0) == 0:
+                f.write(f"| {class_name} | No samples | No samples | No samples | 0 |\n")
+            else:
+                f.write(f"| {class_name} | {metrics_data['precision']:.3f} | {metrics_data['recall']:.3f} | {metrics_data['f1-score']:.3f} | {metrics_data['support']} |\n")
+        f.write("\n")
+        
+        # Add confusion matrix visualization
+        f.write("#### Confusion Matrix\n")
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(metrics['confusion_matrix'], annot=True, fmt='d', cmap='Blues',
+                    xticklabels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'],
+                    yticklabels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'])
+        plt.title(f'Confusion Matrix - {video_name}')
+        plt.ylabel('Human Evaluation')
+        plt.xlabel('LLM Evaluation')
+        
+        # Save plot to file
+        plt.savefig(f'assets/confusion_matrix_{video_name.replace(" ", "_")}.png', bbox_inches='tight')
+        plt.close()
+        
+        f.write(f"![Confusion Matrix](assets/confusion_matrix_{video_name.replace(' ', '_')}.png)\n\n")
 
 if __name__ == "__main__":
     generate_report()

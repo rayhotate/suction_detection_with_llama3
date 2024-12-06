@@ -248,21 +248,74 @@ def save_results(self):
 <h3>True Negatives (Correct Non-Turning Detection)</h3>
 <p>No examples of true negatives found in the dataset.</p>
 <h3>Notable Disagreements</h3>
-<p><strong>Image</strong>: <code>Oral suctioning_frame_13.jpg</code>
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_92.jpg</code>
+- <strong>Human Evaluation</strong>: Oral Suctioning
+- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+- <strong>LLM Reasoning</strong>: {}...
+- <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
+<p><strong>Image</strong>: <code>Oral suctioning_frame_9.jpg</code>
+- <strong>Human Evaluation</strong>: Oral Suctioning
+- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+- <strong>LLM Reasoning</strong>: {'observation': "<strong>\nThe image depicts a woman in a hospital setting, wearing a mask and gloves, standing next to a mannequin in a hospital bed. The woman is holding a suction device with the tube vis...
+- </strong>Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning</p>
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_63.jpg</code>
 - <strong>Human Evaluation</strong>: No Suctioning
 - <strong>LLM Evaluation</strong>: Tracheal Suctioning
 - <strong>LLM Reasoning</strong>: {}...
 - <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
-<p><strong>Image</strong>: <code>Suctioning the endotracheal tube - medical animation_frame_6.jpg</code>
-- <strong>Human Evaluation</strong>: Oral Suctioning
-- <strong>LLM Evaluation</strong>: Tracheal Suctioning
-- <strong>LLM Reasoning</strong>: {'observation': "<strong> The image shows a medical procedure where a doctor is using a flexible tube with a camera to examine the inside of a patient's airway. The doctor's hands are gloved and holding the...
-- </strong>Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning</p>
-<p><strong>Image</strong>: <code>Suctioning the endotracheal tube - medical animation_frame_16.jpg</code>
-- <strong>Human Evaluation</strong>: Oral Suctioning
-- <strong>LLM Evaluation</strong>: Tracheal Suctioning
-- <strong>LLM Reasoning</strong>: {}...
-- <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
+<h2>Per-Video Analysis</h2>
+<h3>Suctioning (National Tracheostomy Safety Project)</h3>
+<ul>
+<li><strong>Total Frames</strong>: 41</li>
+<li><strong>Accuracy</strong>: 80.49%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.944 | 0.708 | 0.810 | 24.0 |
+| Oral Suctioning | No samples | No samples | No samples | 0 |
+| Tracheal Suctioning | 0.762 | 0.941 | 0.842 | 17.0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_Suctioning_(National_Tracheostomy_Safety_Project).png" /></p>
+<h3>Performing Oropharyngeal Suctioning</h3>
+<ul>
+<li><strong>Total Frames</strong>: 43</li>
+<li><strong>Accuracy</strong>: 65.12%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.933 | 0.848 | 0.889 | 33.0 |
+| Oral Suctioning | 0.000 | 0.000 | 0.000 | 10.0 |
+| Tracheal Suctioning | No samples | No samples | No samples | 0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_Performing_Oropharyngeal_Suctioning.png" /></p>
+<h3>Suctioning the endotracheal tube - medical animation</h3>
+<ul>
+<li><strong>Total Frames</strong>: 20</li>
+<li><strong>Accuracy</strong>: 10.00%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.333 | 0.333 | 0.333 | 3.0 |
+| Oral Suctioning | 0.500 | 0.062 | 0.111 | 16.0 |
+| Tracheal Suctioning | 0.000 | 0.000 | 0.000 | 1.0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_Suctioning_the_endotracheal_tube_-_medical_animation.png" /></p>
+<h3>#9 How to perform oral suctioning</h3>
+<ul>
+<li><strong>Total Frames</strong>: 97</li>
+<li><strong>Accuracy</strong>: 46.39%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.794 | 0.540 | 0.643 | 50.0 |
+| Oral Suctioning | 0.857 | 0.383 | 0.529 | 47.0 |
+| Tracheal Suctioning | No samples | No samples | No samples | 0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_#9_How_to_perform_oral_suctioning.png" /></p>
 <h2>Recommendations</h2>
 <ol>
 <li><strong>Model Improvements</strong></li>
