@@ -1,12 +1,12 @@
 # Medical Suctioning Detection Analysis Report
 
 ## Executive Summary
-This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across 218 medical images. The model achieved 52.29% accuracy, with varying performance across different suctioning types.
+This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across 218 medical images. The model achieved 52.29% accuracy for the three label classifications (No Suctioning, Oral Suctioning, Tracheal Suctioning), with varying performance across different suctioning types.
 
 Key findings from the analysis:
 
 1. **Overall Performance**
-   - Total Images Analyzed: 218
+   - Total Images Analyzed: 218 (from five videos)
    - Overall Accuracy: 52.29%
    - Number of Disagreements: 104
 
@@ -23,7 +23,7 @@ Key findings from the analysis:
 4. **Key Challenges**
    - Difficulty distinguishing between oral and tracheal suctioning procedures
    - Inconsistent performance across different video sources
-   - Lower accuracy in animated or non-standard clinical settings
+   - Lower accuracy in animated, CG, or non-standard clinical settings
 
 5. **Notable Strengths**
    - Strong ability to identify absence of suctioning
@@ -316,64 +316,64 @@ class ImageEvaluator:
 
 ### Correct No Suctioning Detection
 
-**Image**: `Performing Oropharyngeal Suctioning_frame_40.jpg`
+**Image**: `Performing Oropharyngeal Suctioning_frame_36.jpg`
 - **Evaluation**: Both human and LLM correctly identified no suctioning
 - **LLM Reasoning**: {}...
 - **Key Features**: Absence of suctioning equipment or procedure
 
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_15.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_3.jpg`
 - **Evaluation**: Both human and LLM correctly identified no suctioning
-- **LLM Reasoning**: {}...
+- **LLM Reasoning**: {'observation': "**\nThe image shows a patient lying in bed with a nurse holding a suction catheter near the patient but not touching. The nurse is positioned at the head of the bed, and the suction c...
 - **Key Features**: Absence of suctioning equipment or procedure
 
 ### Correct Oral Suctioning Detection
 
-**Image**: `#9 How to perform oral suctioning_frame_84.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_90.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
-- **LLM Reasoning**: {'observation': '**\n\nThe image shows a person\'s hand holding a clear suction device with a long, thin tube attached to it. The tube is being inserted into the mouth of a mannequin head. The mannequ...
+- **LLM Reasoning**: {}...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 
-**Image**: `#9 How to perform oral suctioning_frame_50.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_77.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
-- **LLM Reasoning**: {'observation': '**\nThe image depicts a person holding a tube to the mouth of a mannequin head, which is positioned on a white pillow. The mannequin features a bald head, dark eyes, and a blue plaid ...
+- **LLM Reasoning**: {'observation': '** A baby doll with a tube being inserted into its mouth by an unseen hand, suggesting a medical procedure or simulation.\n\n**', 'evidence': "**\n\n* The presence of a tube being ins...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 ### Correct Tracheal Suctioning Detection
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_29.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_10.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {'observation': "The image depicts a medical setting where a patient is lying in a hospital bed, and a healthcare professional is attending to them. The healthcare professional is wearing blue latex g...
+- **LLM Reasoning**: {'observation': "**\n\nThe image shows a person lying on their back with a medical device attached to their neck. The device has a clear plastic tube that extends from the device to the person's mouth...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_26.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_25.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {'observation': "**\n\nThe image depicts a medical professional performing suctioning on a patient in a hospital setting. The patient is an older woman with blonde hair, lying on a bed and wearing a w...
+- **LLM Reasoning**: {'observation': '**\nThe patient is lying in a hospital bed, with a healthcare professional standing next to them. The healthcare professional is wearing blue scrubs and latex gloves, and is holding a...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 ### Notable Disagreements
 
-**Image**: `#9 How to perform oral suctioning_frame_25.jpg`
+**Image**: `Performing Oropharyngeal Suctioning_frame_1.jpg`
 - **Human Evaluation**: No Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
 
 
-**Image**: `#9 How to perform oral suctioning_frame_24.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_73.jpg`
 - **Human Evaluation**: Oral Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {'observation': "**\n\nThe image shows a man, likely a medical professional, performing a procedure on a mannequin head. The man stands behind the mannequin, holding a long tube in his right hand, whi...
+- **LLM Reasoning**: {'observation': "**\nThe image depicts a man demonstrating how to use a device on a mannequin. The man, with short gray hair, wears a light-colored button-down shirt with a name tag and is standing be...
 - **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
 
 
-**Image**: `Oral suctioning_frame_4.jpg`
-- **Human Evaluation**: No Suctioning
+**Image**: `Suctioning the endotracheal tube - medical animation_frame_2.jpg`
+- **Human Evaluation**: Oral Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {}...
-- **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
+- **LLM Reasoning**: {'observation': '** The image depicts a man lying on a medical bed with a tube inserted into his mouth. A healthcare professional, wearing gloves, is holding the tube and appears to be performing some...
+- **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
 
 
 ## Per-Video Analysis

@@ -137,12 +137,12 @@ def generate_report():
         # Title and Executive Summary
         f.write("# Medical Suctioning Detection Analysis Report\n\n")
         f.write("## Executive Summary\n")
-        f.write(f"""This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across {len(merged_df)} medical images. The model achieved {accuracy:.2%} accuracy, with varying performance across different suctioning types.
+        f.write(f"""This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across {len(merged_df)} medical images. The model achieved {accuracy:.2%} accuracy for the three label classifications (No Suctioning, Oral Suctioning, Tracheal Suctioning), with varying performance across different suctioning types.
 
 Key findings from the analysis:
 
 1. **Overall Performance**
-   - Total Images Analyzed: {len(merged_df)}
+   - Total Images Analyzed: {len(merged_df)} (from five videos)
    - Overall Accuracy: {accuracy:.2%}
    - Number of Disagreements: {len(disagreements_df)}
 
@@ -159,7 +159,7 @@ Key findings from the analysis:
 4. **Key Challenges**
    - Difficulty distinguishing between oral and tracheal suctioning procedures
    - Inconsistent performance across different video sources
-   - Lower accuracy in animated or non-standard clinical settings
+   - Lower accuracy in animated, CG, or non-standard clinical settings
 
 5. **Notable Strengths**
    - Strong ability to identify absence of suctioning
