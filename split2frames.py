@@ -2,7 +2,7 @@ import os
 import cv2
 import shutil
 
-def extract_frames_from_videos(video_dir, output_dir, frequency=3):
+def extract_frames_from_videos(video_dir, output_dir, frequency=2):
     """
     Extracts frames from videos at a specified frequency and saves them to an output directory.
 
