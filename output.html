@@ -1,0 +1,390 @@
+<h1>Patient Turning Assistance Detection Analysis Report</h1>
+<h2>Executive Summary</h2>
+<p>This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting patient turning assistance across 320 medical images. The model achieved 71.25% accuracy, demonstrating strong potential while highlighting areas for improvement.</p>
+<h2>Data Sources</h2>
+<h3>Video Sources</h3>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=b77yWsYy7T4">24-hour home care - caregiver training</a></li>
+<li><a href="https://www.youtube.com/watch?v=HnDYPm_C3Ws&amp;t=192s">Assisting with Positioning a Patient in Bed</a></li>
+<li><a href="https://www.youtube.com/watch?v=Y5X429CeV70">Fundamentals of turning and cushion placement</a></li>
+</ul>
+<h3>Frame Extraction Process</h3>
+<p>The frame extraction process is implemented using OpenCV (cv2) with the following specifications:</p>
+<ul>
+<li><strong>Sampling Rate</strong>: Every 3 seconds extracted for consistent analysis</li>
+<li><strong>Implementation</strong>:</li>
+<li>Uses OpenCV's VideoCapture for efficient video processing</li>
+<li>Frames are saved as high-quality JPG images</li>
+<li>Maintains original aspect ratio and resolution</li>
+<li><strong>Processing Flow</strong>:</li>
+<li>Reads video files from source directory</li>
+<li>Creates unique output directories for each video</li>
+<li>Extracts frames at specified intervals</li>
+<li>
+<p>Applies consistent naming convention: <code>{video_name}_frame_{frame_number}.jpg</code></p>
+</li>
+<li>
+<p><strong>Statistics</strong>:</p>
+</li>
+<li>Total frames analyzed: 320</li>
+<li>Format: High-quality JPG images</li>
+<li>Original video sources: 3</li>
+</ul>
+<p>For detailed implementation, see:
+<code>python:split2frames.py
+def extract_frames_from_videos(video_dir, output_dir, frequency=3):</code></p>
+<h2>Technical Implementation</h2>
+<h3>Core Components</h3>
+<ol>
+<li>
+<p><strong>LLaMA 3.2 Vision Model Integration</strong>
+```python:llama32_detect.py
+def img2text(input_path, output_file = None, exportedfile_indexing = False, show_img = False, max_new_tokens = 1000):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")</p>
+<p>model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+model = MllamaForConditionalGeneration.from_pretrained(
+model_id,
+torch_dtype=torch.bfloat16,</p>
+<h1>device_map="auto",</h1>
+<p>)</p>
+<p>model = model.to(device)
+processor = AutoProcessor.from_pretrained(model_id)</p>
+<h1>tokenizer = AutoTokenizer.from_pretrained('meta-llama/Llama-3.2-11B-Vision-Instruct', trust_remote_code=True)</h1>
+<h1>model.eval()</h1>
+<p>dir = [input_path]
+if os.path.isdir(input_path):
+    dir = os.listdir(input_path)</p>
+<p>data = []
+result = {}
+for i, image_path in enumerate(sorted(dir)):
+    # Read the image
+    if os.path.isdir(input_path):
+        image = Image.open(Path(input_path).joinpath(image_path))
+    else:
+        image = Image.open(image_path)</p>
+<pre><code># Describe the image
+input_text = processor.apply_chat_template(msgs("Describe the image in detail."), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0]).split("&lt;|end_header_id|&gt;")[-1].replace('\n', ' ')
+
+# Show the steps based on the image
+prompt = "The picture is about the following:\n" +res +'\n' + prompt_orig
+
+input_text = processor.apply_chat_template(msgs(prompt), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+
+print('\n', i, image_path)
+#print(generated_text,'\n')
+print('Full Response\n', res)
+reason = res.split("&lt;|end_header_id|&gt;")[-1]
+print("Reason:", reason.replace('\n', ' '))
+
+# Conclude
+input_text = processor.apply_chat_template(msgs(reason+ "\nTask: Determine if a patient is being turned by someone else. Your answer should be either 'Yes' or 'No'."), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+res = "False" if "No" in res.split("&lt;|end_header_id|&gt;")[-1] else "True" # We want to have a higher Recall rate, so rather than finding Yes, we want to find No.
+print("Cut:", res)
+
+reason = reason.replace('\n', ' ')
+data.append([image_path, res, reason])
+result[image_path] = (res, reason)
+if show_img:
+    display(HTML(f'&lt;img src="{Path(input_path).joinpath(image_path) if os.path.isdir(input_path) else image_path }" style="width:30%;"&gt;'))
+</code></pre>
+<p>data.sort()</p>
+<h1>if output_file is specified, it generates tsv file</h1>
+<p>if output_file is not None:
+    data_frame = pd.DataFrame(data, columns=['Image', 'llm_evaluation', 'Reason'])
+    data_frame.to_csv(output_file, sep = '\t', index = exportedfile_indexing, encoding = 'utf-8')
+return result
+```</p>
+</li>
+</ol>
+<h2>Evaluation Process</h2>
+<h3>Human Evaluation Interface</h3>
+<p><img alt="Human Evaluation Interface" src="assets/evaluation.png" /></p>
+<p>The human evaluation interface provides a simple way to assess images with the following features:
+- Displays current image with filename
+- Shows LLM's evaluation and reasoning
+- Keyboard controls: 't' for True, 'f' for False
+- Progress tracking and automatic result saving</p>
+<p>Implementation details:
+```python:human_evaluation.py
+class ImageEvaluator:
+    def <strong>init</strong>(self):
+        # Get list of images from frames directory
+        self.image_files = sorted([f for f in os.listdir("frames") if f.endswith(('.png', '.jpg', '.jpeg'))])
+        self.current_index = 0
+        self.results = {}</p>
+<pre><code>    # Load LLM evaluations
+    self.llm_df = pd.read_csv('llm_result.tsv', sep='\t')
+    self.llm_df.set_index('Image', inplace=True)
+
+    # Create figure
+    self.fig = plt.figure(figsize=(10, 10))
+    self.ax_img = plt.axes([0.1, 0.2, 0.8, 0.7])
+
+    # Connect keyboard event handler
+    self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+
+    # Start evaluation
+    self.evaluate_images()
+
+def evaluate_images(self):
+    plt.ion()  # Turn on interactive mode
+
+    while self.current_index &lt; len(self.image_files):
+        self.display_current_image()
+        plt.pause(0.001)  # Small pause to allow GUI to update
+
+        # Wait for keyboard input
+        while self.current_index == len(self.results):
+            plt.pause(0.1)
+
+            # Check if we've processed all images
+            if self.current_index &gt;= len(self.image_files):
+                plt.close('all')
+                self.save_results()
+                return  # Exit the method after saving
+
+    # Save results if we exit the main loop
+    plt.close('all')
+    self.save_results()
+
+def display_current_image(self):
+    current_image = self.image_files[self.current_index]
+
+    # Get LLM evaluation and reason if available
+    llm_eval = "Unknown"
+    reason = "No reason provided"
+    if current_image in self.llm_df.index:
+        llm_eval = self.llm_df.loc[current_image, 'llm_evaluation']
+        reason = self.llm_df.loc[current_image, 'Reason']
+
+    # Clear previous image
+    self.ax_img.clear()
+
+    # Load and display current image
+    image_path = os.path.join("frames", current_image)
+    img = Image.open(image_path)
+    self.ax_img.imshow(img)
+    self.ax_img.axis('off')
+    self.ax_img.set_title(f"Image {self.current_index + 1}/{len(self.image_files)}\n"
+                   f"Filename: {current_image}\n"
+                   f"LLM Evaluation: {llm_eval}\n"
+                   f"LLM Reason: {reason[:300]}...\n"
+                   f"Press 't' for True or 'f' for False")  # Show first 300 chars of reason
+
+    plt.draw()
+
+def on_key_press(self, event):
+    if event.key in ['t', 'f'] and self.current_index &lt; len(self.image_files):
+        current_image = self.image_files[self.current_index]
+        self.results[current_image] = (event.key == 't')
+        self.current_index += 1
+        if self.current_index &lt; len(self.image_files):
+            self.display_current_image()
+        plt.draw()
+
+def save_results(self):
+    # Convert results to DataFrame and save as TSV
+    df = pd.DataFrame.from_dict(self.results, orient='index', columns=['human_evaluation'])
+    df.index.name = 'Image'
+    df = df.sort_index()  # Sort by filename
+    df.to_csv('human_result.tsv', sep='\t')
+    print(f"\nResults saved to human_result.tsv")
+</code></pre>
+<p>```</p>
+<h2>Results Analysis</h2>
+<h3>Performance Metrics</h3>
+<ul>
+<li>Total Images: 320</li>
+<li>Overall Accuracy: 71.25%</li>
+<li>Number of Disagreements: 92</li>
+</ul>
+<h3>Classification Report</h3>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| False | 0.683 | 0.603 | 0.641 | 136 |
+| True | 0.730 | 0.793 | 0.760 | 184 |</p>
+<h3>Confusion Matrix</h3>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix.png" /></p>
+<h2>Image Analysis Examples</h2>
+<h3>True Positives (Correct Turning Assistance Detection)</h3>
+<p><strong>Image</strong>: <code>Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_114.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified turning assistance
+- <strong>LLM Reasoning</strong>:   The image depicts a woman in a blue scrub top assisting an elderly woman in a hospital bed. The woman in blue has dark skin and short, braided hair, and is kneeling beside the bed with her hands on ...
+- <strong>Key Features</strong>: Active physical contact, proper positioning, clear movement intent</p>
+<p><strong>Image</strong>: <code>Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_147.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified turning assistance
+- <strong>LLM Reasoning</strong>:   <strong>Analysis of the Image</strong>  The image depicts a healthcare professional, likely a nurse, tending to a patient in a hospital room. The nurse is attired in blue scrubs with a green zipper and a white b...
+- <strong>Key Features</strong>: Active physical contact, proper positioning, clear movement intent</p>
+<h3>True Negatives (Correct Non-Turning Detection)</h3>
+<p><strong>Image</strong>: <code>24-hour-home-care---caregiver-training-turning-and-positioning-in-a-bed_frame_32.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified non-turning scenario
+- <strong>LLM Reasoning</strong>:   The image depicts a man lying on his back, covered with a white sheet, on a bed with white pillows and a brown wooden headboard. A second man stands beside the bed, wearing a blue polo shirt and bla...
+- <strong>Key Features</strong>: No physical contact for turning, different care activities</p>
+<p><strong>Image</strong>: <code>Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_6.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified non-turning scenario
+- <strong>LLM Reasoning</strong>:   The image shows a healthcare professional, likely a nurse or doctor, standing in a hospital corridor, facing a wall-mounted dispenser. The woman has short, light-brown hair and wears blue scrubs wit...
+- <strong>Key Features</strong>: No physical contact for turning, different care activities</p>
+<h3>Notable Disagreements</h3>
+<p><strong>Image</strong>: <code>Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_96.jpg</code>
+- <strong>Human Evaluation</strong>: False
+- <strong>LLM Evaluation</strong>: True
+- <strong>LLM Reasoning</strong>:   <strong>Step 1: Identify the people present in the image.</strong>  There is a patient visible, and there is at least one caregiver/assistant visible.  <strong>Step 2: Determine the physical contact and assistance.</strong> ...
+- <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
+<p><strong>Image</strong>: <code>24-hour-home-care---caregiver-training-turning-and-positioning-in-a-bed_frame_2.jpg</code>
+- <strong>Human Evaluation</strong>: False
+- <strong>LLM Evaluation</strong>: True
+- <strong>LLM Reasoning</strong>:   <strong>Analysis of the Image</strong>  The image depicts a man standing in a hospital room, with a patient lying in bed. The caregiver is positioned near the patient's feet, with his hands clasped together in f...
+- <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
+<p><strong>Image</strong>: <code>fundamentals-of-turning-and-cushion-placement-when-person-can-assist---1-how-to-turn_frame_2.jpg</code>
+- <strong>Human Evaluation</strong>: False
+- <strong>LLM Evaluation</strong>: True
+- <strong>LLM Reasoning</strong>:   <strong>Analysis of the Image</strong>  The image depicts a person lying on a bed, with a caregiver standing next to them. The caregiver is positioned in a way that suggests they are about to assist the patient ...
+- <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
+<h2>Recommendations</h2>
+<ol>
+<li><strong>Model Improvements</strong></li>
+<li>Enhance detection of preparatory movements</li>
+<li>Improve distinction between turning and other care activities</li>
+<li>
+<p>Add confidence scoring for predictions</p>
+</li>
+<li>
+<p><strong>Data Collection</strong></p>
+</li>
+<li>Expand video sources for greater diversity</li>
+<li>Include more edge cases and partial turning scenarios</li>
+<li>Add temporal context between frames</li>
+</ol>
+<h2>Project Files</h2>
+<h3>Core Components</h3>
+<ul>
+<li><strong>llama32_detect.py</strong>: Vision model implementation</li>
+<li><strong>human_evaluation.py</strong>: Manual annotation interface</li>
+<li><strong>calculate_accuracy.py</strong>: Performance analysis</li>
+<li><strong>report.py</strong>: Analysis report generation</li>
+</ul>
+<h3>Output Files</h3>
+<ul>
+<li><strong>llm_result.tsv</strong>: Model predictions and reasoning</li>
+<li><strong>human_result.tsv</strong>: Human annotations</li>
+<li><strong>disagreements.tsv</strong>: Cases where model and human differ</li>
+<li><strong>accuracy_results.txt</strong>: Detailed performance metrics</li>
+</ul>
+<h2>LLM Detection Pipeline</h2>
+<h3>Model Configuration</h3>
+<p><code>python
+model_id = 'meta-llama/Llama-3.2-11B-Vision-Instruct'
+model = MllamaForConditionalGeneration.from_pretrained(
+    model_id,
+    torch_dtype=torch.bfloat16
+)</code></p>
+<h3>Prompt Engineering</h3>
+<p>The model uses a carefully crafted prompt with three key components:</p>
+<ol>
+<li>
+<p><strong>Role Definition</strong>
+<code>You are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient being assisted in turning by another person.</code></p>
+</li>
+<li>
+<p><strong>Example Cases</strong>
+```
+Example 1: Active Turning
+Image: A nurse standing next to a hospital bed with her hands on a patient's shoulder and hip, clearly in the process of rolling them from their back to their side.
+Analysis: True - This shows active turning assistance because:</p>
+</li>
+<li>Direct physical contact between caregiver and patient</li>
+<li>Clear repositioning movement from back to side</li>
+<li>Proper supportive hand placement for turning</li>
+</ol>
+<p>Example 2: Non-Turning Care
+Image: A patient lying still in bed while a nurse stands nearby checking IV fluids.
+Analysis: False - This is not turning assistance because:
+- No physical contact for movement support
+- Patient position is static
+- Caregiver is performing different care tasks
+```</p>
+<ol>
+<li>
+<p><strong>Analysis Framework</strong>
+The model evaluates each image using four key aspects:</p>
+</li>
+<li>
+<p><strong>People Present</strong></p>
+</li>
+<li>Patient visibility</li>
+<li>Caregiver presence</li>
+<li>
+<p>Relative positioning</p>
+</li>
+<li>
+<p><strong>Physical Contact &amp; Assistance</strong></p>
+</li>
+<li>Direct physical contact</li>
+<li>Contact points (hands, arms)</li>
+<li>
+<p>Supportive stance</p>
+</li>
+<li>
+<p><strong>Patient Position &amp; Movement</strong></p>
+</li>
+<li>Current position</li>
+<li>Movement evidence</li>
+<li>
+<p>Intended direction</p>
+</li>
+<li>
+<p><strong>Level of Assistance</strong></p>
+</li>
+<li>Active support</li>
+<li>Specific turning actions</li>
+<li>Scenario clarity</li>
+</ol>
+<h3>Processing Pipeline</h3>
+<p><code>mermaid
+graph TD
+    A[Input Image] --&gt; B[Image Processing]
+    B --&gt; C[LLaMA Vision Model]
+    C --&gt; D[Structured Analysis]
+    D --&gt; E[Binary Classification]
+    E --&gt; F[Reasoning Output]</code></p>
+<h3>Output Format</h3>
+<p>The model generates:
+1. Detailed analysis of the image
+2. Binary classification (True/False)
+3. Supporting reasoning</p>
+<p>Example output:
+```
+<strong>Analysis of the Image</strong>
+Upon examining the image, I notice...</p>
+<p><strong>Conclusion</strong>
+Based on [specific observations]...</p>
+<p><strong>Final Determination</strong>
+* True/False: [reasoning]
+```</p>
