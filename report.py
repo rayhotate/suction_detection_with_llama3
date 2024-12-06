@@ -89,40 +89,31 @@ def generate_report():
     def add_image_examples(f, merged_df, disagreements_df):
         f.write("## Image Analysis Examples\n\n")
         
-        # True Positives (convert boolean strings to lowercase for comparison)
-        true_positives = merged_df[
-            (merged_df['llm_evaluation'].astype(str).str.lower() == 'true') & 
-            (merged_df['human_evaluation'].astype(str).str.lower() == 'true')
-        ]
+        # Correct Classifications
+        for category in ['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning']:
+            correct_predictions = merged_df[
+                (merged_df['llm_evaluation'] == category) & 
+                (merged_df['human_evaluation'] == category)
+            ]
+            
+            f.write(f"### Correct {category} Detection\n")
+            if not correct_predictions.empty:
+                samples = correct_predictions.sample(min(2, len(correct_predictions)))
+                for _, row in samples.iterrows():
+                    f.write(f"\n**Image**: `{row['Image']}`\n")
+                    f.write(f"- **Evaluation**: Both human and LLM correctly identified {category.lower()}\n")
+                    f.write(f"- **LLM Reasoning**: {row['Reason'][:200]}...\n")
+                    f.write("- **Key Features**: ")
+                    if category == 'No Suctioning':
+                        f.write("Absence of suctioning equipment or procedure\n\n")
+                    elif category == 'Oral Suctioning':
+                        f.write("Dental setting, oral cavity access, wide-bore suction tools\n\n")
+                    else:  # Tracheal Suctioning
+                        f.write("Tracheostomy access, sterile catheter, supine positioning\n\n")
+            else:
+                f.write(f"\nNo examples of correct {category.lower()} detection found in the dataset.\n\n")
         
-        f.write("### True Positives (Correct Turning Assistance Detection)\n")
-        if not true_positives.empty:
-            samples = true_positives.sample(min(2, len(true_positives)))
-            for _, row in samples.iterrows():
-                f.write(f"\n**Image**: `{row['Image']}`\n")
-                f.write("- **Evaluation**: Both human and LLM correctly identified turning assistance\n")
-                f.write(f"- **LLM Reasoning**: {row['Reason'][:200]}...\n")
-                f.write("- **Key Features**: Active physical contact, proper positioning, clear movement intent\n\n")
-        else:
-            f.write("\nNo examples of true positives found in the dataset.\n\n")
-        
-        # True Negatives
-        true_negatives = merged_df[
-            (merged_df['llm_evaluation'].astype(str).str.lower() == 'false') & 
-            (merged_df['human_evaluation'].astype(str).str.lower() == 'false')
-        ]
-        f.write("### True Negatives (Correct Non-Turning Detection)\n")
-        if not true_negatives.empty:
-            samples = true_negatives.sample(min(2, len(true_negatives)))
-            for _, row in samples.iterrows():
-                f.write(f"\n**Image**: `{row['Image']}`\n")
-                f.write("- **Evaluation**: Both human and LLM correctly identified non-turning scenario\n")
-                f.write(f"- **LLM Reasoning**: {row['Reason'][:200]}...\n")
-                f.write("- **Key Features**: No physical contact for turning, different care activities\n\n")
-        else:
-            f.write("\nNo examples of true negatives found in the dataset.\n\n")
-        
-        # Disagreements
+        # Disagreements section remains largely the same but with updated wording
         f.write("### Notable Disagreements\n")
         if not disagreements_df.empty:
             samples = disagreements_df.sample(min(3, len(disagreements_df)))
@@ -132,10 +123,7 @@ def generate_report():
                 f.write(f"- **LLM Evaluation**: {row['llm_evaluation']}\n")
                 f.write(f"- **LLM Reasoning**: {row['Reason'][:200]}...\n")
                 f.write("- **Analysis of Disagreement**: ")
-                if row['human_evaluation'] == 'True':
-                    f.write("LLM missed subtle turning assistance indicators\n\n")
-                else:
-                    f.write("LLM possibly over-interpreted preparatory positioning\n\n")
+                f.write(f"Misclassification between {row['human_evaluation']} and {row['llm_evaluation']}\n\n")
         else:
             f.write("\nNo disagreements found in the dataset.\n\n")
     
@@ -203,7 +191,10 @@ def generate_report():
         f.write("The human evaluation interface provides a simple way to assess images with the following features:\n")
         f.write("- Displays current image with filename\n")
         f.write("- Shows LLM's evaluation and reasoning\n")
-        f.write("- Keyboard controls: 't' for True, 'f' for False\n")
+        f.write("- Keyboard controls:\n")
+        f.write("  - 'n' for No Suctioning\n")
+        f.write("  - 'o' for Oral Suctioning\n")
+        f.write("  - 't' for Tracheal Suctioning\n")
         f.write("- Progress tracking and automatic result saving\n\n")
 
         f.write("Implementation details:\n")
