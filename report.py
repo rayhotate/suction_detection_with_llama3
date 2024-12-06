@@ -27,6 +27,27 @@ def read_code_file(filepath, start_line=None, end_line=None):
     except Exception as e:
         return f"# Error reading file: {str(e)}"
 
+def generate_confusion_matrix(merged_df, f):
+    # Create confusion matrix
+    conf_matrix = confusion_matrix(merged_df['human_evaluation'], merged_df['llm_evaluation'])
+    
+    # Plot confusion matrix
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
+                xticklabels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'],
+                yticklabels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'])
+    plt.title('Confusion Matrix')
+    plt.ylabel('Human Evaluation')
+    plt.xlabel('LLM Evaluation')
+    
+    # Save plot to file
+    plt.savefig('assets/confusion_matrix.png', bbox_inches='tight')
+    plt.close()
+    
+    # Add to markdown
+    f.write("\n### Confusion Matrix\n")
+    f.write("![Confusion Matrix](assets/confusion_matrix.png)\n\n")
+
 def generate_report():
     # Read results
     llm_df = pd.read_csv('llm_result.tsv', sep='\t')
@@ -105,9 +126,11 @@ def generate_report():
         f.write("## Data Sources\n")
         f.write("### Video Sources\n")
         video_sources = [
-            "[24-hour home care - caregiver training](https://www.youtube.com/watch?v=b77yWsYy7T4)",
-            "[Assisting with Positioning a Patient in Bed](https://www.youtube.com/watch?v=HnDYPm_C3Ws&t=192s)", 
-            "[Fundamentals of turning and cushion placement](https://www.youtube.com/watch?v=Y5X429CeV70)"
+            "[Suctioning a Tracheostomy](https://www.youtube.com/shorts/l-Rygg3N04Y)",
+            "[Oral Suctioning Procedure](https://www.youtube.com/watch?v=lGpfuHdrUgk)",
+            "[Tracheostomy Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)",
+            "[Oral Suctioning Demonstration](https://www.youtube.com/watch?v=pN6-EYoeh3g)",
+            "[Tracheostomy Care and Suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)"
         ]
         for source in video_sources:
             f.write(f"- {source}\n")

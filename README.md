@@ -1,13 +1,15 @@
-# Patient Turning Assistance Detection Analysis Report
+# Medical Suctioning Detection Analysis Report
 
 ## Executive Summary
-This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting patient turning assistance across 320 medical images. The model achieved 71.25% accuracy, demonstrating strong potential while highlighting areas for improvement.
+This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across 218 medical images. The model achieved 52.29% accuracy, with varying performance across different suctioning types.
 
 ## Data Sources
 ### Video Sources
-- [24-hour home care - caregiver training](https://www.youtube.com/watch?v=b77yWsYy7T4)
-- [Assisting with Positioning a Patient in Bed](https://www.youtube.com/watch?v=HnDYPm_C3Ws&t=192s)
-- [Fundamentals of turning and cushion placement](https://www.youtube.com/watch?v=Y5X429CeV70)
+- [Suctioning a Tracheostomy](https://www.youtube.com/shorts/l-Rygg3N04Y)
+- [Oral Suctioning Procedure](https://www.youtube.com/watch?v=lGpfuHdrUgk)
+- [Tracheostomy Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)
+- [Oral Suctioning Demonstration](https://www.youtube.com/watch?v=pN6-EYoeh3g)
+- [Tracheostomy Care and Suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)
 ### Frame Extraction Process
 The frame extraction process is implemented using OpenCV (cv2) with the following specifications:
 
@@ -36,6 +38,63 @@ def extract_frames_from_videos(video_dir, output_dir, frequency=3):
 ### Core Components
 1. **LLaMA 3.2 Vision Model Integration**
 ```python:llama32_detect.py
+- Wider suction tool typical of dental procedures
+- Dental office/chair setting
+
+Now analyze the given image considering:
+Consider the following key aspects to determine the type of suctioning:
+1. Patient and Caregiver Assessment
+- Identify if a patient is present in the frame
+- Look for healthcare providers (dentist, nurse, assistant)
+- Check if their positioning aligns with:
+  * Dental setup: Provider within 45° of patient's front
+  * Medical setup: Provider at head of bed within 30cm
+
+2. Equipment Verification  
+- Identify presence and type of suction device:
+  * Dental: Wide-bore tool (>8mm diameter)
+  * Medical: Thin flexible catheter (3.3-4.7mm)
+- Verify active insertion and ongoing suctioning:
+  * Dental: Must be inside oral cavity and actively suctioning
+  * Medical: Must be through tracheostomy, 10cm+ depth and actively suctioning
+  * No Suctioning: Device visible but not inserted, or inserted but not actively suctioning
+
+3. Procedure Context
+- Evaluate patient positioning:
+  * Dental: Upright in dental chair
+  * Medical: Supine or max 30° incline
+- Assess clinical setting:
+  * Dental office vs medical facility
+- Look for procedure-specific equipment:
+  * Dental chair, lights, tools
+  * Hospital bed, monitors, sterile field
+
+4. Active Suctioning Indicators
+- Check for clear evidence of ongoing suctioning process:
+  * Device must be actively inserted and performing suction
+  * Merely holding or positioning device is not sufficient
+  * No Suctioning if device is visible but not actively used
+- Verify proper technique:
+  * Provider in correct procedural stance
+  * Proper equipment selection and active use
+- Look for supporting medical devices:
+  * Tracheostomy tube
+  * Ventilator equipment
+  * Dental procedure setup
+
+Note: Classify as No Suctioning if:
+- Device is visible but not inserted in patient
+- Device is inserted but no active suctioning occurring
+- Provider is only holding/preparing device
+- Any pause or break in active suctioning process
+
+Based on your analysis, provide your response in the following format:
+
+OBSERVATION: [Detailed description of what you observe in the image]
+CLASSIFICATION: [One of: No Suctioning, Oral Suctioning, or Tracheal Suctioning]
+EVIDENCE: [List the key evidence that led to your conclusion]
+"""
+
 def img2text(input_path, output_file = None, exportedfile_indexing = False, show_img = False, max_new_tokens = 1000):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -43,11 +102,14 @@ def img2text(input_path, output_file = None, exportedfile_indexing = False, show
     model = MllamaForConditionalGeneration.from_pretrained(
     model_id,
     torch_dtype=torch.bfloat16,
+    #device_map="auto",
     )
     
     model = model.to(device)
     processor = AutoProcessor.from_pretrained(model_id)
     
+    #tokenizer = AutoTokenizer.from_pretrained('meta-llama/Llama-3.2-11B-Vision-Instruct', trust_remote_code=True)
+    #model.eval()
     dir = [input_path]
     if os.path.isdir(input_path):
         dir = os.listdir(input_path)
@@ -64,62 +126,6 @@ def img2text(input_path, output_file = None, exportedfile_indexing = False, show
         
         # Describe the image
         input_text = processor.apply_chat_template(msgs("Describe the image in detail."), add_generation_prompt=True)
-        inputs = processor(
-            image,
-            input_text,
-            add_special_tokens=False,
-            return_tensors="pt"
-        ).to(model.device)
-        
-        res = model.generate(**inputs, max_new_tokens=max_new_tokens)
-        res = processor.decode(res[0]).split("<|end_header_id|>")[-1].replace('\n', ' ')
-        
-        # Show the steps based on the image
-        prompt = "The picture is about the following:\n" +res +'\n' + prompt_orig
-        
-        input_text = processor.apply_chat_template(msgs(prompt), add_generation_prompt=True)
-        inputs = processor(
-            image,
-            input_text,
-            add_special_tokens=False,
-            return_tensors="pt"
-        ).to(model.device)
-        
-        res = model.generate(**inputs, max_new_tokens=max_new_tokens)
-        res = processor.decode(res[0])
-        
-        
-        print('\n', i, image_path)
-        print('Full Response\n', res)
-        reason = res.split("<|end_header_id|>")[-1]
-        print("Reason:", reason.replace('\n', ' '))
-        
-        # Conclude
-        input_text = processor.apply_chat_template(msgs(reason+ "\nTask: Determine if a patient is being turned by someone else. Your answer should be either 'Yes' or 'No'."), add_generation_prompt=True)
-        inputs = processor(
-            image,
-            input_text,
-            add_special_tokens=False,
-            return_tensors="pt"
-        ).to(model.device)
-        
-        res = model.generate(**inputs, max_new_tokens=max_new_tokens)
-        res = processor.decode(res[0])
-        res = "False" if "No" in res.split("<|end_header_id|>")[-1] else "True" # We want to have a higher Recall rate, so rather than finding Yes, we want to find No.
-        print("Cut:", res)
-        
-        reason = reason.replace('\n', ' ')
-        data.append([image_path, res, reason])
-        result[image_path] = (res, reason)
-        if show_img:
-            display(HTML(f'<img src="{Path(input_path).joinpath(image_path) if os.path.isdir(input_path) else image_path }" style="width:30%;">'))
-    data.sort()
-    
-    # if output_file is specified, it generates tsv file
-    if output_file is not None:
-        data_frame = pd.DataFrame(data, columns=['Image', 'llm_evaluation', 'Reason'])
-        data_frame.to_csv(output_file, sep = '\t', index = exportedfile_indexing, encoding = 'utf-8')
-    return result
 ```
 
 ## Evaluation Process
@@ -199,14 +205,19 @@ class ImageEvaluator:
                        f"Filename: {current_image}\n"
                        f"LLM Evaluation: {llm_eval}\n"
                        f"LLM Reason: {reason[:300]}...\n"
-                       f"Press 't' for True or 'f' for False")  # Show first 300 chars of reason
+                       f"Press 'n' for No Suctioning, 'o' for Oral Suctioning, or 't' for Tracheal Suctioning")  # Show first 300 chars of reason
         
         plt.draw()
         
     def on_key_press(self, event):
-        if event.key in ['t', 'f'] and self.current_index < len(self.image_files):
+        if event.key in ['n', 'o', 't'] and self.current_index < len(self.image_files):
             current_image = self.image_files[self.current_index]
-            self.results[current_image] = (event.key == 't')
+            if event.key == 'n':
+                self.results[current_image] = 'No Suctioning'
+            elif event.key == 'o':
+                self.results[current_image] = 'Oral Suctioning'
+            elif event.key == 't':
+                self.results[current_image] = 'Tracheal Suctioning'
             self.current_index += 1
             if self.current_index < len(self.image_files):
                 self.display_current_image()
@@ -214,24 +225,20 @@ class ImageEvaluator:
         
     def save_results(self):
         # Convert results to DataFrame and save as TSV
-        df = pd.DataFrame.from_dict(self.results, orient='index', columns=['human_evaluation'])
-        df.index.name = 'Image'
-        df = df.sort_index()  # Sort by filename
-        df.to_csv('human_result.tsv', sep='\t')
-        print(f"\nResults saved to human_result.tsv")
 ```
 
 ## Results Analysis
 ### Performance Metrics
-- Total Images: 320
-- Overall Accuracy: 71.25%
-- Number of Disagreements: 92
+- Total Images: 218
+- Overall Accuracy: 52.29%
+- Number of Disagreements: 104
 
 ### Classification Report
 | Class | Precision | Recall | F1-Score | Support |
 |-------|-----------|---------|-----------|----------|
-| False | 0.683 | 0.603 | 0.641 | 136 |
-| True | 0.730 | 0.793 | 0.760 | 184 |
+| No Suctioning | 0.857 | 0.639 | 0.732 | 122.0 |
+| Oral Suctioning | 0.769 | 0.256 | 0.385 | 78.0 |
+| Tracheal Suctioning | 0.158 | 0.889 | 0.269 | 18.0 |
 
 ### Confusion Matrix
 ![Confusion Matrix](assets/confusion_matrix.png)
@@ -240,62 +247,44 @@ class ImageEvaluator:
 
 ### True Positives (Correct Turning Assistance Detection)
 
-**Image**: `Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_114.jpg`
-- **Evaluation**: Both human and LLM correctly identified turning assistance
-- **LLM Reasoning**:   The image depicts a woman in a blue scrub top assisting an elderly woman in a hospital bed. The woman in blue has dark skin and short, braided hair, and is kneeling beside the bed with her hands on ...
-- **Key Features**: Active physical contact, proper positioning, clear movement intent
-
-
-**Image**: `Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_147.jpg`
-- **Evaluation**: Both human and LLM correctly identified turning assistance
-- **LLM Reasoning**:   **Analysis of the Image**  The image depicts a healthcare professional, likely a nurse, tending to a patient in a hospital room. The nurse is attired in blue scrubs with a green zipper and a white b...
-- **Key Features**: Active physical contact, proper positioning, clear movement intent
+No examples of true positives found in the dataset.
 
 ### True Negatives (Correct Non-Turning Detection)
 
-**Image**: `24-hour-home-care---caregiver-training-turning-and-positioning-in-a-bed_frame_32.jpg`
-- **Evaluation**: Both human and LLM correctly identified non-turning scenario
-- **LLM Reasoning**:   The image depicts a man lying on his back, covered with a white sheet, on a bed with white pillows and a brown wooden headboard. A second man stands beside the bed, wearing a blue polo shirt and bla...
-- **Key Features**: No physical contact for turning, different care activities
-
-
-**Image**: `Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_6.jpg`
-- **Evaluation**: Both human and LLM correctly identified non-turning scenario
-- **LLM Reasoning**:   The image shows a healthcare professional, likely a nurse or doctor, standing in a hospital corridor, facing a wall-mounted dispenser. The woman has short, light-brown hair and wears blue scrubs wit...
-- **Key Features**: No physical contact for turning, different care activities
+No examples of true negatives found in the dataset.
 
 ### Notable Disagreements
 
-**Image**: `Assisting with Positioning a Patient in Bed - Ashraf Z Qotmosh (720p, h264, youtube)_frame_96.jpg`
-- **Human Evaluation**: False
-- **LLM Evaluation**: True
-- **LLM Reasoning**:   **Step 1: Identify the people present in the image.**  There is a patient visible, and there is at least one caregiver/assistant visible.  **Step 2: Determine the physical contact and assistance.** ...
+**Image**: `#9 How to perform oral suctioning_frame_93.jpg`
+- **Human Evaluation**: Oral Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
+- **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `24-hour-home-care---caregiver-training-turning-and-positioning-in-a-bed_frame_2.jpg`
-- **Human Evaluation**: False
-- **LLM Evaluation**: True
-- **LLM Reasoning**:   **Analysis of the Image**  The image depicts a man standing in a hospital room, with a patient lying in bed. The caregiver is positioned near the patient's feet, with his hands clasped together in f...
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_0.jpg`
+- **Human Evaluation**: No Suctioning
+- **LLM Evaluation**: Oral Suctioning
+- **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `fundamentals-of-turning-and-cushion-placement-when-person-can-assist---1-how-to-turn_frame_2.jpg`
-- **Human Evaluation**: False
-- **LLM Evaluation**: True
-- **LLM Reasoning**:   **Analysis of the Image**  The image depicts a person lying on a bed, with a caregiver standing next to them. The caregiver is positioned in a way that suggests they are about to assist the patient ...
+**Image**: `Suctioning the endotracheal tube - medical animation_frame_18.jpg`
+- **Human Evaluation**: Oral Suctioning
+- **LLM Evaluation**: No Suctioning
+- **LLM Reasoning**: {'observation': "** The image depicts a medical professional, dressed in gloves and a black top, using a specialized tool to examine a patient's airway. The patient is positioned on their back, covere...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
 ## Recommendations
 1. **Model Improvements**
-   - Enhance detection of preparatory movements
-   - Improve distinction between turning and other care activities
+   - Enhance distinction between oral and tracheal suctioning
+   - Improve detection of suctioning equipment and setup
    - Add confidence scoring for predictions
 
 2. **Data Collection**
-   - Expand video sources for greater diversity
-   - Include more edge cases and partial turning scenarios
+   - Balance dataset across all three suctioning types
+   - Include more examples of tracheal suctioning
    - Add temporal context between frames
 
 
