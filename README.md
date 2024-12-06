@@ -5,11 +5,11 @@ This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting t
 
 ## Data Sources
 ### Video Sources
-- [Suctioning a Tracheostomy](https://www.youtube.com/shorts/l-Rygg3N04Y)
-- [Oral Suctioning Procedure](https://www.youtube.com/watch?v=lGpfuHdrUgk)
-- [Tracheostomy Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)
-- [Oral Suctioning Demonstration](https://www.youtube.com/watch?v=pN6-EYoeh3g)
-- [Tracheostomy Care and Suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)
+- [Oral Suctioning](https://www.youtube.com/shorts/l-Rygg3N04Y)
+- [Suctioning (National Tracheostomy Safety Project)](https://www.youtube.com/watch?v=lGpfuHdrUgk)
+- [Performing Oropharyngeal Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)
+- [Suctioning the endotracheal tube - medical animation](https://www.youtube.com/watch?v=pN6-EYoeh3g)
+- [#9 How to perform oral suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)
 ### Frame Extraction Process
 The frame extraction process is implemented using OpenCV (cv2) with the following specifications:
 
@@ -255,23 +255,23 @@ No examples of true negatives found in the dataset.
 
 ### Notable Disagreements
 
-**Image**: `#9 How to perform oral suctioning_frame_32.jpg`
+**Image**: `Oral suctioning_frame_13.jpg`
 - **Human Evaluation**: No Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `Oral suctioning_frame_12.jpg`
+**Image**: `Suctioning the endotracheal tube - medical animation_frame_6.jpg`
 - **Human Evaluation**: Oral Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {'observation': "** The image shows a woman in a blue shirt and black pants, wearing gloves and a mask, standing next to a hospital bed with a mannequin inside. The woman is holding a tube that is con...
+- **LLM Reasoning**: {'observation': "** The image shows a medical procedure where a doctor is using a flexible tube with a camera to examine the inside of a patient's airway. The doctor's hands are gloved and holding the...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 
 
-**Image**: `#9 How to perform oral suctioning_frame_31.jpg`
+**Image**: `Suctioning the endotracheal tube - medical animation_frame_16.jpg`
 - **Human Evaluation**: Oral Suctioning
-- **LLM Evaluation**: No Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning
 

@@ -126,11 +126,11 @@ def generate_report():
         f.write("## Data Sources\n")
         f.write("### Video Sources\n")
         video_sources = [
-            "[Suctioning a Tracheostomy](https://www.youtube.com/shorts/l-Rygg3N04Y)",
-            "[Oral Suctioning Procedure](https://www.youtube.com/watch?v=lGpfuHdrUgk)",
-            "[Tracheostomy Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)",
-            "[Oral Suctioning Demonstration](https://www.youtube.com/watch?v=pN6-EYoeh3g)",
-            "[Tracheostomy Care and Suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)"
+            "[Oral Suctioning](https://www.youtube.com/shorts/l-Rygg3N04Y)",
+            "[Suctioning (National Tracheostomy Safety Project)](https://www.youtube.com/watch?v=lGpfuHdrUgk)",
+            "[Performing Oropharyngeal Suctioning](https://www.youtube.com/watch?v=SwoLb3z25fc)",
+            "[Suctioning the endotracheal tube - medical animation](https://www.youtube.com/watch?v=pN6-EYoeh3g)",
+            "[#9 How to perform oral suctioning](https://www.youtube.com/watch?v=DIBMp_yh0gY)"
         ]
         for source in video_sources:
             f.write(f"- {source}\n")
