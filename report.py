@@ -55,7 +55,7 @@ def calculate_video_metrics(merged_df, video_name):
     if len(video_df) == 0:
         return None
         
-    # Calculate metrics
+    # Calculate metrics with zero_division parameter
     accuracy = accuracy_score(video_df['human_evaluation'], video_df['llm_evaluation'])
     conf_matrix = confusion_matrix(
         video_df['human_evaluation'], 
@@ -66,7 +66,8 @@ def calculate_video_metrics(merged_df, video_name):
         video_df['human_evaluation'], 
         video_df['llm_evaluation'],
         labels=['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning'],
-        output_dict=True
+        output_dict=True,
+        zero_division=0
     )
     
     return {
@@ -166,7 +167,7 @@ def generate_report():
         # Add frame extraction visualization and details
         f.write("### Frame Extraction Process\n")
         f.write("The frame extraction process is implemented using OpenCV (cv2) with the following specifications:\n\n")
-        f.write("- **Sampling Rate**: Every 3 seconds extracted for consistent analysis\n")
+        f.write("- **Sampling Rate**: Every 2 seconds extracted for consistent analysis\n")
         f.write("- **Implementation**:\n")
         f.write("  - Uses OpenCV's VideoCapture for efficient video processing\n")
         f.write("  - Frames are saved as high-quality JPG images\n")
@@ -177,9 +178,9 @@ def generate_report():
         f.write("  3. Extracts frames at specified intervals\n")
         f.write("  4. Applies consistent naming convention: `{video_name}_frame_{frame_number}.jpg`\n\n")
         f.write("- **Statistics**:\n")
-        f.write("  - Total frames analyzed: 320\n")
+        f.write("  - Total frames analyzed: 218\n")
         f.write("  - Format: High-quality JPG images\n")
-        f.write("  - Original video sources: 3\n\n")
+        f.write("  - Original video sources: 5\n\n")
         f.write("For detailed implementation, see:\n")
         f.write("```python:split2frames.py\n")
         f.write(read_code_file('split2frames.py', 5, 5))
@@ -190,7 +191,7 @@ def generate_report():
         f.write("### Core Components\n")
         f.write("1. **LLaMA 3.2 Vision Model Integration**\n")
         f.write("```python:llama32_detect.py\n")
-        f.write(read_code_file('llama32_detect.py', 80, 167))
+        f.write(read_code_file('llama32_detect.py', 137, 255))
         f.write("\n```\n")
         
         # Evaluation Process
@@ -207,7 +208,7 @@ def generate_report():
 
         f.write("Implementation details:\n")
         f.write("```python:human_evaluation.py\n")
-        f.write(read_code_file('human_evaluation.py', 9, 92))
+        f.write(read_code_file('human_evaluation.py', 9, 98))
         f.write("\n```\n")
         
         # Results Analysis
@@ -266,71 +267,79 @@ def generate_report():
         
         f.write("### Prompt Engineering\n")
         f.write("The model uses a carefully crafted prompt with three key components:\n\n")
-        
+
         f.write("1. **Role Definition**\n")
-        f.write("```\nYou are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient being assisted in turning by another person.\n```\n\n")
-        
-        f.write("2. **Example Cases**\n")
-        f.write("```\nExample 1: Active Turning\n")
-        f.write("Image: A nurse standing next to a hospital bed with her hands on a patient's shoulder and hip, clearly in the process of rolling them from their back to their side.\n")
-        f.write("Analysis: True - This shows active turning assistance because:\n")
-        f.write("- Direct physical contact between caregiver and patient\n")
-        f.write("- Clear repositioning movement from back to side\n")
-        f.write("- Proper supportive hand placement for turning\n\n")
-        
-        f.write("Example 2: Non-Turning Care\n")
-        f.write("Image: A patient lying still in bed while a nurse stands nearby checking IV fluids.\n")
-        f.write("Analysis: False - This is not turning assistance because:\n")
-        f.write("- No physical contact for movement support\n")
-        f.write("- Patient position is static\n")
-        f.write("- Caregiver is performing different care tasks\n```\n\n")
-        
+        f.write("```\nYou are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient undergoing suctioning using a tube. Classify the scenario into one of the following categories: No Suctioning, Oral Suctioning (dental), or Tracheal Suctioning (throat/covid).\n```\n\n")
+
+        f.write("2. **Definitions and Criteria**\n")
+        f.write("```\n1. Oral Suctioning:\n")
+        f.write("   - Performed exclusively by licensed dentists or dental assistants\n")
+        f.write("   - Suction device must be actively placed inside patient's oral cavity\n")
+        f.write("   - Specifically for removal of oral fluids during dental procedures\n")
+        f.write("   - Patient must be seated upright in a dental chair\n")
+        f.write("   - Equipment: Wide-bore dental suction tools (>8mm diameter)\n")
+        f.write("   - Caregiver position: Within 45 degrees of patient's front, at oral level\n\n")
+
+        f.write("2. Tracheal Suctioning:\n")
+        f.write("   - Performed only by licensed healthcare professionals\n")
+        f.write("   - Sterile catheter must be actively inserted through tracheostomy opening\n")
+        f.write("   - Exclusively for clearing respiratory secretions from airways\n")
+        f.write("   - Patient must be supine or at maximum 30 degree incline\n")
+        f.write("   - Equipment: Sterile flexible catheter (10-14 French/3.3-4.7mm diameter)\n")
+        f.write("   - Caregiver position: Standing at head of bed, within 30cm of patient's head\n```\n\n")
+
         f.write("3. **Analysis Framework**\n")
         f.write("The model evaluates each image using four key aspects:\n\n")
-        f.write("- **People Present**\n")
-        f.write("  - Patient visibility\n")
-        f.write("  - Caregiver presence\n")
-        f.write("  - Relative positioning\n\n")
-        
-        f.write("- **Physical Contact & Assistance**\n")
-        f.write("  - Direct physical contact\n")
-        f.write("  - Contact points (hands, arms)\n")
-        f.write("  - Supportive stance\n\n")
-        
-        f.write("- **Patient Position & Movement**\n")
-        f.write("  - Current position\n")
-        f.write("  - Movement evidence\n")
-        f.write("  - Intended direction\n\n")
-        
-        f.write("- **Level of Assistance**\n")
-        f.write("  - Active support\n")
-        f.write("  - Specific turning actions\n")
-        f.write("  - Scenario clarity\n\n")
-        
+        f.write("- **Patient and Caregiver Assessment**\n")
+        f.write("  - Patient presence and positioning\n")
+        f.write("  - Healthcare provider identification\n")
+        f.write("  - Provider positioning relative to patient\n\n")
+
+        f.write("- **Equipment Verification**\n")
+        f.write("  - Suction device type and size\n")
+        f.write("  - Active insertion verification\n")
+        f.write("  - Proper equipment usage\n\n")
+
+        f.write("- **Procedure Context**\n")
+        f.write("  - Clinical setting assessment\n")
+        f.write("  - Patient positioning\n")
+        f.write("  - Supporting medical equipment\n\n")
+
+        f.write("- **Active Suctioning Indicators**\n")
+        f.write("  - Ongoing procedure verification\n")
+        f.write("  - Proper technique assessment\n")
+        f.write("  - Supporting device presence\n\n")
+
         f.write("### Processing Pipeline\n")
         f.write("```mermaid\n")
         f.write("graph TD\n")
         f.write("    A[Input Image] --> B[Image Processing]\n")
         f.write("    B --> C[LLaMA Vision Model]\n")
         f.write("    C --> D[Structured Analysis]\n")
-        f.write("    D --> E[Binary Classification]\n")
-        f.write("    E --> F[Reasoning Output]\n")
+        f.write("    D --> E[Classification]\n")
+        f.write("    E --> F[Detailed Reasoning]\n")
         f.write("```\n\n")
         
         f.write("### Output Format\n")
-        f.write("The model generates:\n")
-        f.write("1. Detailed analysis of the image\n")
-        f.write("2. Binary classification (True/False)\n")
-        f.write("3. Supporting reasoning\n\n")
+        f.write("The model generates a structured output with three components:\n")
+        f.write("1. Detailed analysis of the medical scene\n")
+        f.write("2. Classification into one of three categories:\n")
+        f.write("   - No Suctioning\n")
+        f.write("   - Oral Suctioning\n")
+        f.write("   - Tracheal Suctioning\n")
+        f.write("3. Supporting reasoning with key observations\n\n")
         
         f.write("Example output:\n")
         f.write("```\n")
         f.write("**Analysis of the Image**\n")
-        f.write("Upon examining the image, I notice...\n\n")
-        f.write("**Conclusion**\n")
-        f.write("Based on [specific observations]...\n\n")
-        f.write("**Final Determination**\n")
-        f.write("* True/False: [reasoning]\n")
+        f.write("The image shows a medical professional in PPE standing at the head of a hospital bed...\n\n")
+        f.write("**Key Observations**\n")
+        f.write("- Patient positioning: Supine at 30° incline\n")
+        f.write("- Equipment: Sterile catheter (4mm diameter)\n")
+        f.write("- Procedure: Active insertion through tracheostomy\n")
+        f.write("- Setting: ICU with monitoring equipment\n\n")
+        f.write("**Classification**\n")
+        f.write("Tracheal Suctioning\n")
         f.write("```\n\n")
 
 def write_classification_report(f, class_report):
@@ -338,8 +347,12 @@ def write_classification_report(f, class_report):
     f.write("| Class | Precision | Recall | F1-Score | Support |\n")
     f.write("|-------|-----------|---------|-----------|----------|\n")
     for class_name in ['No Suctioning', 'Oral Suctioning', 'Tracheal Suctioning']:
-        metrics = class_report[class_name]
-        f.write(f"| {class_name} | {metrics['precision']:.3f} | {metrics['recall']:.3f} | {metrics['f1-score']:.3f} | {metrics['support']} |\n")
+        metrics = class_report.get(class_name, {})
+        # Handle cases where metrics might be missing
+        if not metrics or metrics.get('support', 0) == 0:
+            f.write(f"| {class_name} | N/A | N/A | N/A | 0 |\n")
+        else:
+            f.write(f"| {class_name} | {metrics['precision']:.3f} | {metrics['recall']:.3f} | {metrics['f1-score']:.3f} | {metrics['support']} |\n")
 
 def write_video_results(f, merged_df, video_sources):
     f.write("\n## Per-Video Analysis\n\n")

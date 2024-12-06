@@ -13,7 +13,7 @@
 <h3>Frame Extraction Process</h3>
 <p>The frame extraction process is implemented using OpenCV (cv2) with the following specifications:</p>
 <ul>
-<li><strong>Sampling Rate</strong>: Every 3 seconds extracted for consistent analysis</li>
+<li><strong>Sampling Rate</strong>: Every 2 seconds extracted for consistent analysis</li>
 <li><strong>Implementation</strong>:</li>
 <li>Uses OpenCV's VideoCapture for efficient video processing</li>
 <li>Frames are saved as high-quality JPG images</li>
@@ -28,9 +28,9 @@
 <li>
 <p><strong>Statistics</strong>:</p>
 </li>
-<li>Total frames analyzed: 320</li>
+<li>Total frames analyzed: 218</li>
 <li>Format: High-quality JPG images</li>
-<li>Original video sources: 3</li>
+<li>Original video sources: 5</li>
 </ul>
 <p>For detailed implementation, see:
 <code>python:split2frames.py
@@ -38,100 +38,124 @@ def extract_frames_from_videos(video_dir, output_dir, frequency=3):</code></p>
 <h2>Technical Implementation</h2>
 <h3>Core Components</h3>
 <ol>
-<li><strong>LLaMA 3.2 Vision Model Integration</strong>
-```python:llama32_detect.py</li>
-<li>Wider suction tool typical of dental procedures</li>
-<li>Dental office/chair setting</li>
-</ol>
-<p>Now analyze the given image considering:
-Consider the following key aspects to determine the type of suctioning:
-1. Patient and Caregiver Assessment
-- Identify if a patient is present in the frame
-- Look for healthcare providers (dentist, nurse, assistant)
-- Check if their positioning aligns with:
-  * Dental setup: Provider within 45° of patient's front
-  * Medical setup: Provider at head of bed within 30cm</p>
-<ol>
-<li>Equipment Verification  </li>
-<li>Identify presence and type of suction device:</li>
-<li>Dental: Wide-bore tool (&gt;8mm diameter)</li>
-<li>Medical: Thin flexible catheter (3.3-4.7mm)</li>
-<li>Verify active insertion and ongoing suctioning:</li>
-<li>Dental: Must be inside oral cavity and actively suctioning</li>
-<li>Medical: Must be through tracheostomy, 10cm+ depth and actively suctioning</li>
 <li>
-<p>No Suctioning: Device visible but not inserted, or inserted but not actively suctioning</p>
-</li>
-<li>
-<p>Procedure Context</p>
-</li>
-<li>Evaluate patient positioning:</li>
-<li>Dental: Upright in dental chair</li>
-<li>Medical: Supine or max 30° incline</li>
-<li>Assess clinical setting:</li>
-<li>Dental office vs medical facility</li>
-<li>Look for procedure-specific equipment:</li>
-<li>Dental chair, lights, tools</li>
-<li>
-<p>Hospital bed, monitors, sterile field</p>
-</li>
-<li>
-<p>Active Suctioning Indicators</p>
-</li>
-<li>Check for clear evidence of ongoing suctioning process:</li>
-<li>Device must be actively inserted and performing suction</li>
-<li>Merely holding or positioning device is not sufficient</li>
-<li>No Suctioning if device is visible but not actively used</li>
-<li>Verify proper technique:</li>
-<li>Provider in correct procedural stance</li>
-<li>Proper equipment selection and active use</li>
-<li>Look for supporting medical devices:</li>
-<li>Tracheostomy tube</li>
-<li>Ventilator equipment</li>
-<li>Dental procedure setup</li>
-</ol>
-<p>Note: Classify as No Suctioning if:
-- Device is visible but not inserted in patient
-- Device is inserted but no active suctioning occurring
-- Provider is only holding/preparing device
-- Any pause or break in active suctioning process</p>
-<p>Based on your analysis, provide your response in the following format:</p>
-<p>OBSERVATION: [Detailed description of what you observe in the image]
-CLASSIFICATION: [One of: No Suctioning, Oral Suctioning, or Tracheal Suctioning]
-EVIDENCE: [List the key evidence that led to your conclusion]
-"""</p>
-<p>def img2text(input_path, output_file = None, exportedfile_indexing = False, show_img = False, max_new_tokens = 1000):
+<p><strong>LLaMA 3.2 Vision Model Integration</strong>
+```python:llama32_detect.py
+def img2text(input_path, output_file = None, exportedfile_indexing = False, show_img = False, max_new_tokens = 1000):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")</p>
-<pre><code>model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+<p>model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
 model = MllamaForConditionalGeneration.from_pretrained(
 model_id,
-torch_dtype=torch.bfloat16,
-#device_map="auto",
-)
-
-model = model.to(device)
-processor = AutoProcessor.from_pretrained(model_id)
-
-#tokenizer = AutoTokenizer.from_pretrained('meta-llama/Llama-3.2-11B-Vision-Instruct', trust_remote_code=True)
-#model.eval()
-dir = [input_path]
+torch_dtype=torch.bfloat16,</p>
+<h1>device_map="auto",</h1>
+<p>)</p>
+<p>model = model.to(device)
+processor = AutoProcessor.from_pretrained(model_id)</p>
+<h1>tokenizer = AutoTokenizer.from_pretrained('meta-llama/Llama-3.2-11B-Vision-Instruct', trust_remote_code=True)</h1>
+<h1>model.eval()</h1>
+<p>dir = [input_path]
 if os.path.isdir(input_path):
-    dir = os.listdir(input_path)
-
-data = []
+    dir = os.listdir(input_path)</p>
+<p>data = []
 result = {}
 for i, image_path in enumerate(sorted(dir)):
     # Read the image
     if os.path.isdir(input_path):
         image = Image.open(Path(input_path).joinpath(image_path))
     else:
-        image = Image.open(image_path)
+        image = Image.open(image_path)</p>
+<pre><code># Describe the image
+input_text = processor.apply_chat_template(msgs("Describe the image in detail."), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
 
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0]).split("&lt;|end_header_id|&gt;")[-1].replace('\n', ' ')
 
-    # Describe the image
-    input_text = processor.apply_chat_template(msgs("Describe the image in detail."), add_generation_prompt=True)
+# Show the steps based on the image
+prompt = "The picture is about the following:\n" +res +'\n' + prompt_orig
+
+input_text = processor.apply_chat_template(msgs(prompt), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+
+print('\n', i, image_path)
+#print(generated_text,'\n')
+print('Full Response\n', res)
+reason = res.split("&lt;|end_header_id|&gt;")[-1]
+print("Reason:", reason.replace('\n', ' '))
+
+# Conclude
+input_text = processor.apply_chat_template(
+    msgs(reason + "\nTask: Provide your final classification in the following format ONLY:\nCLASSIFICATION: [No Suctioning/Oral Suctioning/Tracheal Suctioning]"),
+    add_generation_prompt=True
+)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+response_text = res.split("&lt;|end_header_id|&gt;")[-1]
+
+# Extract classification using more robust parsing
+classification = "Unknown"
+if "CLASSIFICATION:" in response_text:
+    classification_text = response_text.split("CLASSIFICATION:")[-1].strip()
+    # Remove any trailing text after the classification
+    classification_text = classification_text.split("\n")[0].strip()
+    # Remove any square brackets
+    classification_text = classification_text.strip("[]")
+
+    # Normalize the text and check for matches
+    classification_text = classification_text.lower()
+    if "no suctioning" in classification_text:
+        classification = "No Suctioning"
+    elif "oral suctioning" in classification_text:
+        classification = "Oral Suctioning"
+    elif "tracheal suctioning" in classification_text:
+        classification = "Tracheal Suctioning"
+
+print("Classification:", classification)
+
+# Parse the detailed reason response
+parsed_reason = {}
+if "OBSERVATION:" in reason:
+    sections = reason.split("EVIDENCE:")
+    if len(sections) &gt; 1:
+        parsed_reason = {
+            "observation": sections[0].split("OBSERVATION:")[-1].split("CLASSIFICATION:")[0].strip(),
+            "evidence": sections[1].strip()
+        }
+
+data.append([image_path, classification, parsed_reason])
+result[image_path] = (classification, parsed_reason)
+if show_img:
+    display(HTML(f'&lt;img src="{Path(input_path).joinpath(image_path) if os.path.isdir(input_path) else image_path }" style="width:30%;"&gt;'))
 </code></pre>
-<p>```</p>
+<p>data.sort()</p>
+<h1>if output_file is specified, it generates tsv file</h1>
+<p>if output_file is not None:
+    data_frame = pd.DataFrame(data, columns=['Image', 'llm_evaluation', 'Reason'])
+    data_frame.to_csv(output_file, sep = '\t', index = exportedfile_indexing, encoding = 'utf-8')
+return result
+```</p>
+</li>
+</ol>
 <h2>Evaluation Process</h2>
 <h3>Human Evaluation Interface</h3>
 <p><img alt="Human Evaluation Interface" src="assets/evaluation.png" /></p>
@@ -225,6 +249,12 @@ def on_key_press(self, event):
 
 def save_results(self):
     # Convert results to DataFrame and save as TSV
+    df = pd.DataFrame.from_dict(self.results, orient='index', columns=['human_evaluation'])
+    df.index.name = 'Image'
+    df = df.sort_index()  # Sort by filename
+    df.to_csv('human_result.tsv', sep='\t')
+    print(f"\nResults saved to human_result.tsv")
+    print(f"Evaluated {len(self.results)} images")
 </code></pre>
 <p>```</p>
 <h2>Results Analysis</h2>
@@ -248,9 +278,9 @@ def save_results(self):
 <h3>True Negatives (Correct Non-Turning Detection)</h3>
 <p>No examples of true negatives found in the dataset.</p>
 <h3>Notable Disagreements</h3>
-<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_92.jpg</code>
-- <strong>Human Evaluation</strong>: Oral Suctioning
-- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_41.jpg</code>
+- <strong>Human Evaluation</strong>: No Suctioning
+- <strong>LLM Evaluation</strong>: Oral Suctioning
 - <strong>LLM Reasoning</strong>: {}...
 - <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
 <p><strong>Image</strong>: <code>Oral suctioning_frame_9.jpg</code>
@@ -258,10 +288,10 @@ def save_results(self):
 - <strong>LLM Evaluation</strong>: Tracheal Suctioning
 - <strong>LLM Reasoning</strong>: {'observation': "<strong>\nThe image depicts a woman in a hospital setting, wearing a mask and gloves, standing next to a mannequin in a hospital bed. The woman is holding a suction device with the tube vis...
 - </strong>Analysis of Disagreement**: LLM possibly over-interpreted preparatory positioning</p>
-<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_63.jpg</code>
-- <strong>Human Evaluation</strong>: No Suctioning
-- <strong>LLM Evaluation</strong>: Tracheal Suctioning
-- <strong>LLM Reasoning</strong>: {}...
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_27.jpg</code>
+- <strong>Human Evaluation</strong>: Oral Suctioning
+- <strong>LLM Evaluation</strong>: No Suctioning
+- <strong>LLM Reasoning</strong>: {'observation': "A man, likely a medical professional, is standing behind a dummy that is lying on its back on a hospital bed. The man is holding a tube to the dummy's mouth and appears to be demonstr...
 - <strong>Analysis of Disagreement</strong>: LLM possibly over-interpreted preparatory positioning</p>
 <h2>Per-Video Analysis</h2>
 <h3>Suctioning (National Tracheostomy Safety Project)</h3>
@@ -359,61 +389,67 @@ model = MllamaForConditionalGeneration.from_pretrained(
 <ol>
 <li>
 <p><strong>Role Definition</strong>
-<code>You are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient being assisted in turning by another person.</code></p>
+<code>You are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient undergoing suctioning using a tube. Classify the scenario into one of the following categories: No Suctioning, Oral Suctioning (dental), or Tracheal Suctioning (throat/covid).</code></p>
 </li>
 <li>
-<p><strong>Example Cases</strong>
-```
-Example 1: Active Turning
-Image: A nurse standing next to a hospital bed with her hands on a patient's shoulder and hip, clearly in the process of rolling them from their back to their side.
-Analysis: True - This shows active turning assistance because:</p>
-</li>
-<li>Direct physical contact between caregiver and patient</li>
-<li>Clear repositioning movement from back to side</li>
-<li>Proper supportive hand placement for turning</li>
-</ol>
-<p>Example 2: Non-Turning Care
-Image: A patient lying still in bed while a nurse stands nearby checking IV fluids.
-Analysis: False - This is not turning assistance because:
-- No physical contact for movement support
-- Patient position is static
-- Caregiver is performing different care tasks
+<p><strong>Definitions and Criteria</strong>
 ```</p>
-<ol>
+</li>
+<li>Oral Suctioning:</li>
+<li>Performed exclusively by licensed dentists or dental assistants</li>
+<li>Suction device must be actively placed inside patient's oral cavity</li>
+<li>Specifically for removal of oral fluids during dental procedures</li>
+<li>Patient must be seated upright in a dental chair</li>
+<li>Equipment: Wide-bore dental suction tools (&gt;8mm diameter)</li>
+<li>
+<p>Caregiver position: Within 45 degrees of patient's front, at oral level</p>
+</li>
+<li>
+<p>Tracheal Suctioning:</p>
+</li>
+<li>Performed only by licensed healthcare professionals</li>
+<li>Sterile catheter must be actively inserted through tracheostomy opening</li>
+<li>Exclusively for clearing respiratory secretions from airways</li>
+<li>Patient must be supine or at maximum 30 degree incline</li>
+<li>Equipment: Sterile flexible catheter (10-14 French/3.3-4.7mm diameter)</li>
+<li>
+<p>Caregiver position: Standing at head of bed, within 30cm of patient's head
+```</p>
+</li>
 <li>
 <p><strong>Analysis Framework</strong>
 The model evaluates each image using four key aspects:</p>
 </li>
 <li>
-<p><strong>People Present</strong></p>
+<p><strong>Patient and Caregiver Assessment</strong></p>
 </li>
-<li>Patient visibility</li>
-<li>Caregiver presence</li>
+<li>Patient presence and positioning</li>
+<li>Healthcare provider identification</li>
 <li>
-<p>Relative positioning</p>
-</li>
-<li>
-<p><strong>Physical Contact &amp; Assistance</strong></p>
-</li>
-<li>Direct physical contact</li>
-<li>Contact points (hands, arms)</li>
-<li>
-<p>Supportive stance</p>
+<p>Provider positioning relative to patient</p>
 </li>
 <li>
-<p><strong>Patient Position &amp; Movement</strong></p>
+<p><strong>Equipment Verification</strong></p>
 </li>
-<li>Current position</li>
-<li>Movement evidence</li>
+<li>Suction device type and size</li>
+<li>Active insertion verification</li>
 <li>
-<p>Intended direction</p>
+<p>Proper equipment usage</p>
 </li>
 <li>
-<p><strong>Level of Assistance</strong></p>
+<p><strong>Procedure Context</strong></p>
 </li>
-<li>Active support</li>
-<li>Specific turning actions</li>
-<li>Scenario clarity</li>
+<li>Clinical setting assessment</li>
+<li>Patient positioning</li>
+<li>
+<p>Supporting medical equipment</p>
+</li>
+<li>
+<p><strong>Active Suctioning Indicators</strong></p>
+</li>
+<li>Ongoing procedure verification</li>
+<li>Proper technique assessment</li>
+<li>Supporting device presence</li>
 </ol>
 <h3>Processing Pipeline</h3>
 <p><code>mermaid
@@ -421,19 +457,25 @@ graph TD
     A[Input Image] --&gt; B[Image Processing]
     B --&gt; C[LLaMA Vision Model]
     C --&gt; D[Structured Analysis]
-    D --&gt; E[Binary Classification]
-    E --&gt; F[Reasoning Output]</code></p>
+    D --&gt; E[Classification]
+    E --&gt; F[Detailed Reasoning]</code></p>
 <h3>Output Format</h3>
-<p>The model generates:
-1. Detailed analysis of the image
-2. Binary classification (True/False)
-3. Supporting reasoning</p>
+<p>The model generates a structured output with three components:
+1. Detailed analysis of the medical scene
+2. Classification into one of three categories:
+   - No Suctioning
+   - Oral Suctioning
+   - Tracheal Suctioning
+3. Supporting reasoning with key observations</p>
 <p>Example output:
 ```
 <strong>Analysis of the Image</strong>
-Upon examining the image, I notice...</p>
-<p><strong>Conclusion</strong>
-Based on [specific observations]...</p>
-<p><strong>Final Determination</strong>
-* True/False: [reasoning]
+The image shows a medical professional in PPE standing at the head of a hospital bed...</p>
+<p><strong>Key Observations</strong>
+- Patient positioning: Supine at 30° incline
+- Equipment: Sterile catheter (4mm diameter)
+- Procedure: Active insertion through tracheostomy
+- Setting: ICU with monitoring equipment</p>
+<p><strong>Classification</strong>
+Tracheal Suctioning
 ```</p>
