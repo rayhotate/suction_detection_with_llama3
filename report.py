@@ -220,7 +220,7 @@ def generate_report():
         write_video_results(f, merged_df, video_sources)
         
         # Recommendations
-        f.write("\n## Recommendations\n")
+        f.write("\n## Future Work\n")
         f.write("1. **Model Improvements**\n")
         f.write("   - Enhance distinction between oral and tracheal suctioning\n")
         f.write("   - Improve detection of suctioning equipment and setup\n")
