@@ -287,69 +287,73 @@ class ImageEvaluator:
 
 ### Correct No Suctioning Detection
 
+**Image**: `#9 How to perform oral suctioning_frame_12.jpg`
+- **Evaluation**: Both human and LLM correctly identified no suctioning
+- **LLM Reasoning**: {}...
+- **Key Features**: Absence of suctioning equipment or procedure
+
+
 **Image**: `Performing Oropharyngeal Suctioning_frame_40.jpg`
 - **Evaluation**: Both human and LLM correctly identified no suctioning
 - **LLM Reasoning**: {}...
 - **Key Features**: Absence of suctioning equipment or procedure
 
-
-**Image**: `Performing Oropharyngeal Suctioning_frame_2.jpg`
-- **Evaluation**: Both human and LLM correctly identified no suctioning
-- **LLM Reasoning**: {'observation': "The image shows a patient lying in bed with a healthcare provider standing at the head of the bed, holding a suction catheter. The catheter is not inserted into the patient's airway, ...
-- **Key Features**: Absence of suctioning equipment or procedure
-
 ### Correct Oral Suctioning Detection
 
-**Image**: `#9 How to perform oral suctioning_frame_79.jpg`
+**Image**: `Oral suctioning_frame_7.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
 - **LLM Reasoning**: {}...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 
-**Image**: `#9 How to perform oral suctioning_frame_76.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_78.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
-- **LLM Reasoning**: {'observation': "**\n\nThe image depicts a medical training scenario where a mannequin head is being used to demonstrate oral suctioning. The mannequin has a bald head and large, brown eyes. A curved ...
+- **LLM Reasoning**: {'observation': "**\nThe image shows a person's hands holding a nasal aspirator, poised to remove mucus from a baby's nose. The baby's head is positioned on a white surface, with only the top portion ...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 ### Correct Tracheal Suctioning Detection
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_22.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_10.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {}...
+- **LLM Reasoning**: {'observation': "**\n\nThe image shows a person lying on their back with a medical device attached to their neck. The device has a clear plastic tube that extends from the device to the person's mouth...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_28.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_30.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {}...
+- **LLM Reasoning**: {'observation': "** A healthcare professional is shown in the process of suctioning a patient's throat, with the catheter fully withdrawn after suctioning.\n\n**", 'evidence': "**\n\n* The healthcare ...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 ### Notable Disagreements
 
-**Image**: `#9 How to perform oral suctioning_frame_34.jpg`
-- **Human Evaluation**: Oral Suctioning
-- **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {'observation': "**\n\nThe image shows a man, likely a healthcare professional, standing behind a mannequin head. He is holding a long tube in his right hand and touching the mannequin's forehead with...
-- **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
-
-
-**Image**: `Suctioning the endotracheal tube - medical animation_frame_6.jpg`
-- **Human Evaluation**: Oral Suctioning
-- **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {'observation': "** The image shows a medical procedure where a doctor is using a flexible tube with a camera to examine the inside of a patient's airway. The doctor's hands are gloved and holding the...
-- **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
-
-
-**Image**: `#9 How to perform oral suctioning_frame_41.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_6.jpg`
 - **Human Evaluation**: No Suctioning
-- **LLM Evaluation**: Oral Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
-- **Analysis of Disagreement**: Misclassification between No Suctioning and Oral Suctioning
+- **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
+
+
+**Image**: `#9 How to perform oral suctioning_frame_59.jpg`
+- **Human Evaluation**: No Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
+- **LLM Reasoning**: {}...
+- **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
+
+
+**Image**: `Performing Oropharyngeal Suctioning_frame_33.jpg`
+- **Human Evaluation**: Oral Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
+- **LLM Reasoning**: {}...
+- **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
 
 
 ## Per-Video Analysis
 
 ### Suctioning (National Tracheostomy Safety Project)
+![Representative Frame](frames/Suctioning (National Tracheostomy Safety Project)_frame_10.jpg)
+
+*Representative frame showing tracheal suctioning*
+
 - **Total Frames**: 41
 - **Accuracy**: 80.49%
 
@@ -364,6 +368,10 @@ class ImageEvaluator:
 ![Confusion Matrix](assets/confusion_matrix_Suctioning_(National_Tracheostomy_Safety_Project).png)
 
 ### Performing Oropharyngeal Suctioning
+![Representative Frame](frames/Performing Oropharyngeal Suctioning_frame_24.jpg)
+
+*Representative frame showing oral suctioning*
+
 - **Total Frames**: 43
 - **Accuracy**: 65.12%
 
@@ -378,6 +386,10 @@ class ImageEvaluator:
 ![Confusion Matrix](assets/confusion_matrix_Performing_Oropharyngeal_Suctioning.png)
 
 ### Suctioning the endotracheal tube - medical animation
+![Representative Frame](frames/Suctioning the endotracheal tube - medical animation_frame_0.jpg)
+
+*Representative frame showing tracheal suctioning*
+
 - **Total Frames**: 20
 - **Accuracy**: 10.00%
 
@@ -392,6 +404,10 @@ class ImageEvaluator:
 ![Confusion Matrix](assets/confusion_matrix_Suctioning_the_endotracheal_tube_-_medical_animation.png)
 
 ### #9 How to perform oral suctioning
+![Representative Frame](frames/#9 How to perform oral suctioning_frame_19.jpg)
+
+*Representative frame showing oral suctioning*
+
 - **Total Frames**: 97
 - **Accuracy**: 46.39%
 

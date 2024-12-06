@@ -357,6 +357,19 @@ def write_video_results(f, merged_df, video_sources):
             continue
             
         f.write(f"### {video_name}\n")
+        
+        # Find a representative frame showing suctioning
+        video_df = merged_df[merged_df['Image'].str.startswith(video_name)]
+        suctioning_frames = video_df[
+            (video_df['human_evaluation'] == 'Oral Suctioning') | 
+            (video_df['human_evaluation'] == 'Tracheal Suctioning')
+        ]
+        
+        if not suctioning_frames.empty:
+            example_frame = suctioning_frames.iloc[0]['Image']
+            f.write(f"![Representative Frame](frames/{example_frame})\n\n")
+            f.write(f"*Representative frame showing {suctioning_frames.iloc[0]['human_evaluation'].lower()}*\n\n")
+        
         f.write(f"- **Total Frames**: {metrics['total_frames']}\n")
         f.write(f"- **Accuracy**: {metrics['accuracy']:.2%}\n\n")
         
