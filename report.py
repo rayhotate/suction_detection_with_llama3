@@ -50,8 +50,8 @@ def generate_confusion_matrix(merged_df, f):
 
 def calculate_video_metrics(merged_df, video_name):
     # Filter dataframe for specific video
+    print(merged_df)
     video_df = merged_df[merged_df['Image'].str.startswith(video_name)]
-    
     if len(video_df) == 0:
         return None
         
@@ -375,10 +375,11 @@ def write_classification_report(f, class_report):
 
 def write_video_results(f, merged_df, video_sources):
     f.write("\n## Per-Video Analysis\n\n")
-    
+    #print(video_sources)
     for video_url in video_sources:
         # Extract video name from URL
         video_name = video_url.split(']')[0].replace('[', '')
+        #print(video_name)
         metrics = calculate_video_metrics(merged_df, video_name)
         
         if metrics is None:
@@ -435,9 +436,9 @@ if __name__ == "__main__":
     with open('README.md', 'r') as file:
         text = file.read()
 
-    # Convert Markdown to HTML
+    """# Convert Markdown to HTML
     html = markdown.markdown(text)
 
     # Save the HTML output
     with open('output.html', 'w') as file:
-        file.write(html)
+        file.write(html)"""
