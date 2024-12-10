@@ -195,7 +195,7 @@ This analysis highlights both the potential and current limitations of using LLa
         f.write("- **Data Cleaning**:\n")
         f.write("  - Excluded non-medical content such as drawing.\n")
         f.write("  - Ensured patients in the dataset are only real medical procedure images\n\n")
-        f.write("  - ![Example excluded frame](assets/excluded_drawing.jpg)\n")
+        f.write("  ![Example excluded frame](assets/excluded_drawing.jpg)\n")
         f.write("- **Statistics**:\n")
         f.write("  - Total frames analyzed: 190\n")
         f.write("  - Format: High-quality JPG images\n")
