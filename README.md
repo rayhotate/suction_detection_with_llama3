@@ -55,7 +55,7 @@ The frame extraction process is implemented using OpenCV (cv2) with the followin
   - Excluded non-medical content (e.g., `#9 How to perform oral suctioning_frame_drawing.jpg`)
   - Ensured patients in the dataset are only real medical procedure images
 
-  - ![Example excluded frame](assets/#9 How to perform oral suctioning_frame_drawing.jpg)
+  - ![Example excluded frame](assets/9_How_to_perform_oral_suctioning_frame_drawing.jpg)
 - **Statistics**:
   - Total frames analyzed: 190
   - Format: High-quality JPG images
@@ -319,63 +319,63 @@ class ImageEvaluator:
 
 ### Correct No Suctioning Detection
 
-**Image**: `#9 How to perform oral suctioning_frame_1.jpg`
+**Image**: `Performing Oropharyngeal Suctioning_frame_42.jpg`
 - **Evaluation**: Both human and LLM correctly identified no suctioning
 - **LLM Reasoning**: {}...
 - **Key Features**: Absence of suctioning equipment or procedure
 
 
-**Image**: `#9 How to perform oral suctioning_frame_12.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_23.jpg`
 - **Evaluation**: Both human and LLM correctly identified no suctioning
 - **LLM Reasoning**: {}...
 - **Key Features**: Absence of suctioning equipment or procedure
 
 ### Correct Oral Suctioning Detection
 
-**Image**: `#9 How to perform oral suctioning_frame_84.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_83.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
-- **LLM Reasoning**: {'observation': '**\n\nThe image shows a person\'s hand holding a clear suction device with a long, thin tube attached to it. The tube is being inserted into the mouth of a mannequin head. The mannequ...
+- **LLM Reasoning**: {'observation': "** The image shows a mannequin head with its mouth open, and a person's hand holding a clear suction tube that is inserted into the mannequin's mouth. The mannequin is lying on a whit...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 
-**Image**: `#9 How to perform oral suctioning_frame_71.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_79.jpg`
 - **Evaluation**: Both human and LLM correctly identified oral suctioning
-- **LLM Reasoning**: {'observation': "** The image depicts a man standing behind a mannequin, holding a tube that is inserted into the mannequin's mouth. The man, with short gray hair, wears a khaki-colored shirt with a n...
+- **LLM Reasoning**: {}...
 - **Key Features**: Dental setting, oral cavity access, wide-bore suction tools
 
 ### Correct Tracheal Suctioning Detection
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_24.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_27.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {'observation': 'A woman lying in a hospital bed with a tube inserted into her neck, and a medical professional standing beside her.', 'evidence': "The tube inserted into the woman's neck, the medical...
+- **LLM Reasoning**: {}...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 
-**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_20.jpg`
+**Image**: `Suctioning (National Tracheostomy Safety Project)_frame_5.jpg`
 - **Evaluation**: Both human and LLM correctly identified tracheal suctioning
-- **LLM Reasoning**: {'observation': '** The image depicts a person\'s neck with a catheter inserted, and a blue text box with white text that reads, "If the catheter won\'t pass or blood is aspirated, seek an appropriate...
+- **LLM Reasoning**: {}...
 - **Key Features**: Tracheostomy access, sterile catheter, supine positioning
 
 ### Notable Disagreements
 
-**Image**: `Performing Oropharyngeal Suctioning_frame_27.jpg`
-- **Human Evaluation**: Oral Suctioning
-- **LLM Evaluation**: No Suctioning
-- **LLM Reasoning**: {'observation': "**\n\nThe image depicts a serene scene in a hospital room, where a nurse is attending to a patient. The nurse, with blonde hair tied in a ponytail, is dressed in blue scrubs and a gre...
-- **Analysis of Disagreement**: Misclassification between Oral Suctioning and No Suctioning
-
-
-**Image**: `#9 How to perform oral suctioning_frame_11.jpg`
+**Image**: `Performing Oropharyngeal Suctioning_frame_22.jpg`
 - **Human Evaluation**: No Suctioning
-- **LLM Evaluation**: Oral Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
 - **LLM Reasoning**: {}...
-- **Analysis of Disagreement**: Misclassification between No Suctioning and Oral Suctioning
+- **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
 
 
-**Image**: `Oral suctioning_frame_9.jpg`
+**Image**: `#9 How to perform oral suctioning_frame_17.jpg`
+- **Human Evaluation**: No Suctioning
+- **LLM Evaluation**: Tracheal Suctioning
+- **LLM Reasoning**: {}...
+- **Analysis of Disagreement**: Misclassification between No Suctioning and Tracheal Suctioning
+
+
+**Image**: `Performing Oropharyngeal Suctioning_frame_28.jpg`
 - **Human Evaluation**: Oral Suctioning
 - **LLM Evaluation**: Tracheal Suctioning
-- **LLM Reasoning**: {'observation': "**\nThe image depicts a woman in a hospital setting, wearing a mask and gloves, standing next to a mannequin in a hospital bed. The woman is holding a suction device with the tube vis...
+- **LLM Reasoning**: {}...
 - **Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning
 
 
