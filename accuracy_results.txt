@@ -1,0 +1,20 @@
+Videos analyzed: All
+Total images: 190
+Accuracy: 58.42% (0.584)
+
+Confusion Matrix:
+Labels: No Suctioning, Oral Suctioning, Tracheal Suctioning
+[[77  5 37]
+ [10 18 26]
+ [ 1  0 16]]
+
+Classification Report:
+                     precision    recall  f1-score   support
+
+      No Suctioning       0.88      0.65      0.74       119
+    Oral Suctioning       0.78      0.33      0.47        54
+Tracheal Suctioning       0.20      0.94      0.33        17
+
+           accuracy                           0.58       190
+          macro avg       0.62      0.64      0.51       190
+       weighted avg       0.79      0.58      0.63       190

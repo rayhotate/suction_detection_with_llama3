@@ -1,0 +1,539 @@
+<h1>Medical Suctioning Detection Analysis Report</h1>
+<h2>Executive Summary</h2>
+<p>This analysis evaluates the performance of LLaMA 3.2 Vision model in detecting three types of medical suctioning procedures across 190 medical images. The model achieved 58.42% accuracy for the three label classifications (No Suctioning, Oral Suctioning, Tracheal Suctioning), with varying performance across different suctioning types.</p>
+<p>Key findings from the analysis:</p>
+<ol>
+<li><strong>Overall Performance</strong></li>
+<li>Total Images Analyzed: 190 (from four videos)</li>
+<li>Overall Accuracy: 58.42%</li>
+<li>
+<p>Number of Disagreements: 79</p>
+</li>
+<li>
+<p><strong>Category-Specific Performance</strong></p>
+</li>
+<li>No Suctioning: High precision (0.88) but moderate recall (0.65)</li>
+<li>Oral Suctioning: Good precision (0.78) but low recall (0.33)</li>
+<li>
+<p>Tracheal Suctioning: Low precision (0.20) but high recall (0.94)</p>
+</li>
+<li>
+<p><strong>Video-Specific Results</strong></p>
+</li>
+<li>Best Performance: "Suctioning (National Tracheostomy Safety Project)" - 80.49% accuracy</li>
+<li>Moderate Performance: "Performing Oropharyngeal Suctioning" - 65.12% accuracy</li>
+<li>
+<p>Lower Performance: "#9 How to perform oral suctioning" - 49.44% accuracy</p>
+</li>
+<li>
+<p><strong>Key Challenges</strong></p>
+</li>
+<li>Difficulty distinguishing between oral and tracheal suctioning procedures</li>
+<li>Inconsistent performance across different video sources</li>
+<li>
+<p>Lower accuracy in animated, CG, or non-standard clinical settings</p>
+</li>
+<li>
+<p><strong>Notable Strengths</strong></p>
+</li>
+<li>Strong ability to identify absence of suctioning (0.88 precision)</li>
+<li>Good performance in clear clinical settings</li>
+<li>Reliable detection of standard medical equipment</li>
+</ol>
+<p>This analysis highlights both the potential and current limitations of using LLaMA 3.2 Vision for medical procedure detection, suggesting specific areas for improvement in future iterations.</p>
+<h2>Data Sources</h2>
+<h3>Video Sources</h3>
+<ul>
+<li><a href="https://www.youtube.com/shorts/l-Rygg3N04Y">Oral Suctioning</a></li>
+<li><a href="https://www.youtube.com/watch?v=lGpfuHdrUgk">Suctioning (National Tracheostomy Safety Project)</a></li>
+<li><a href="https://www.youtube.com/watch?v=SwoLb3z25fc">Performing Oropharyngeal Suctioning</a></li>
+<li><a href="https://www.youtube.com/watch?v=DIBMp_yh0gY">#9 How to perform oral suctioning</a></li>
+</ul>
+<h3>Frame Extraction Process</h3>
+<p>The frame extraction process is implemented using OpenCV (cv2) with the following specifications:</p>
+<ul>
+<li><strong>Sampling Rate</strong>: Every 2 seconds extracted for consistent analysis</li>
+<li><strong>Implementation</strong>:</li>
+<li>Uses OpenCV's VideoCapture for efficient video processing</li>
+<li>Frames are saved as high-quality JPG images</li>
+<li>Maintains original aspect ratio and resolution</li>
+<li><strong>Processing Flow</strong>:</li>
+<li>Reads video files from source directory</li>
+<li>Creates unique output directories for each video</li>
+<li>Extracts frames at specified intervals</li>
+<li>
+<p>Applies consistent naming convention: <code>{video_name}_frame_{frame_number}.jpg</code></p>
+</li>
+<li>
+<p><strong>Statistics</strong>:</p>
+</li>
+<li>Total frames analyzed: 190</li>
+<li>Format: High-quality JPG images</li>
+<li>Original video sources: 4</li>
+</ul>
+<p>For detailed implementation, see:
+<code>python:split2frames.py
+def extract_frames_from_videos(video_dir, output_dir, frequency=2):</code></p>
+<h2>Technical Implementation</h2>
+<h3>Core Components</h3>
+<ol>
+<li>
+<p><strong>LLaMA 3.2 Vision Model Integration</strong>
+```python:llama32_detect.py
+def img2text(input_path, output_file = None, exportedfile_indexing = False, show_img = False, max_new_tokens = 1000):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")</p>
+<p>model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+model = MllamaForConditionalGeneration.from_pretrained(
+model_id,
+torch_dtype=torch.bfloat16,</p>
+<h1>device_map="auto",</h1>
+<p>)</p>
+<p>model = model.to(device)
+processor = AutoProcessor.from_pretrained(model_id)</p>
+<h1>tokenizer = AutoTokenizer.from_pretrained('meta-llama/Llama-3.2-11B-Vision-Instruct', trust_remote_code=True)</h1>
+<h1>model.eval()</h1>
+<p>dir = [input_path]
+if os.path.isdir(input_path):
+    dir = os.listdir(input_path)</p>
+<p>data = []
+result = {}
+for i, image_path in enumerate(sorted(dir)):
+    # Read the image
+    if os.path.isdir(input_path):
+        image = Image.open(Path(input_path).joinpath(image_path))
+    else:
+        image = Image.open(image_path)</p>
+<pre><code># Describe the image
+input_text = processor.apply_chat_template(msgs("Describe the image in detail."), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0]).split("&lt;|end_header_id|&gt;")[-1].replace('\n', ' ')
+
+# Show the steps based on the image
+prompt = "The picture is about the following:\n" +res +'\n' + prompt_orig
+
+input_text = processor.apply_chat_template(msgs(prompt), add_generation_prompt=True)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+
+print('\n', i, image_path)
+#print(generated_text,'\n')
+print('Full Response\n', res)
+reason = res.split("&lt;|end_header_id|&gt;")[-1]
+print("Reason:", reason.replace('\n', ' '))
+
+# Conclude
+input_text = processor.apply_chat_template(
+    msgs(reason + "\nTask: Provide your final classification in the following format ONLY:\nCLASSIFICATION: [No Suctioning/Oral Suctioning/Tracheal Suctioning]"),
+    add_generation_prompt=True
+)
+inputs = processor(
+    image,
+    input_text,
+    add_special_tokens=False,
+    return_tensors="pt"
+).to(model.device)
+
+res = model.generate(**inputs, max_new_tokens=max_new_tokens)
+res = processor.decode(res[0])
+response_text = res.split("&lt;|end_header_id|&gt;")[-1]
+
+# Extract classification using more robust parsing
+classification = "Unknown"
+if "CLASSIFICATION:" in response_text:
+    classification_text = response_text.split("CLASSIFICATION:")[-1].strip()
+    # Remove any trailing text after the classification
+    classification_text = classification_text.split("\n")[0].strip()
+    # Remove any square brackets
+    classification_text = classification_text.strip("[]")
+
+    # Normalize the text and check for matches
+    classification_text = classification_text.lower()
+    if "no suctioning" in classification_text:
+        classification = "No Suctioning"
+    elif "oral suctioning" in classification_text:
+        classification = "Oral Suctioning"
+    elif "tracheal suctioning" in classification_text:
+        classification = "Tracheal Suctioning"
+
+print("Classification:", classification)
+
+# Parse the detailed reason response
+parsed_reason = {}
+if "OBSERVATION:" in reason:
+    sections = reason.split("EVIDENCE:")
+    if len(sections) &gt; 1:
+        parsed_reason = {
+            "observation": sections[0].split("OBSERVATION:")[-1].split("CLASSIFICATION:")[0].strip(),
+            "evidence": sections[1].strip()
+        }
+
+data.append([image_path, classification, parsed_reason])
+result[image_path] = (classification, parsed_reason)
+if show_img:
+    display(HTML(f'&lt;img src="{Path(input_path).joinpath(image_path) if os.path.isdir(input_path) else image_path }" style="width:30%;"&gt;'))
+</code></pre>
+<p>data.sort()</p>
+<h1>if output_file is specified, it generates tsv file</h1>
+<p>if output_file is not None:
+    data_frame = pd.DataFrame(data, columns=['Image', 'llm_evaluation', 'Reason'])
+    data_frame.to_csv(output_file, sep = '\t', index = exportedfile_indexing, encoding = 'utf-8')
+return result
+```</p>
+</li>
+</ol>
+<h2>Evaluation Process</h2>
+<h3>Human Evaluation Interface</h3>
+<p><img alt="Human Evaluation Interface" src="assets/evaluation.png" /></p>
+<p>The human evaluation interface provides a simple way to assess images with the following features:
+- Displays current image with filename
+- Shows LLM's evaluation and reasoning
+- Keyboard controls:
+  - 'n' for No Suctioning
+  - 'o' for Oral Suctioning
+  - 't' for Tracheal Suctioning
+- Progress tracking and automatic result saving</p>
+<p>Implementation details:
+```python:human_evaluation.py
+class ImageEvaluator:
+    def <strong>init</strong>(self):
+        # Get list of images from frames directory
+        self.image_files = sorted([f for f in os.listdir("frames") if f.endswith(('.png', '.jpg', '.jpeg'))])
+        self.current_index = 0
+        self.results = {}</p>
+<pre><code>    # Load LLM evaluations
+    self.llm_df = pd.read_csv('llm_result.tsv', sep='\t')
+    self.llm_df.set_index('Image', inplace=True)
+
+    # Create figure
+    self.fig = plt.figure(figsize=(10, 10))
+    self.ax_img = plt.axes([0.1, 0.2, 0.8, 0.7])
+
+    # Connect keyboard event handler
+    self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
+
+    # Start evaluation
+    self.evaluate_images()
+
+def evaluate_images(self):
+    plt.ion()  # Turn on interactive mode
+
+    while self.current_index &lt; len(self.image_files):
+        self.display_current_image()
+        plt.pause(0.001)  # Small pause to allow GUI to update
+
+        # Wait for keyboard input
+        while self.current_index == len(self.results):
+            plt.pause(0.1)
+
+            # Check if we've processed all images
+            if self.current_index &gt;= len(self.image_files):
+                plt.close('all')
+                self.save_results()
+                return  # Exit the method after saving
+
+    # Save results if we exit the main loop
+    plt.close('all')
+    self.save_results()
+
+def display_current_image(self):
+    current_image = self.image_files[self.current_index]
+
+    # Get LLM evaluation and reason if available
+    llm_eval = "Unknown"
+    reason = "No reason provided"
+    if current_image in self.llm_df.index:
+        llm_eval = self.llm_df.loc[current_image, 'llm_evaluation']
+        reason = self.llm_df.loc[current_image, 'Reason']
+
+    # Clear previous image
+    self.ax_img.clear()
+
+    # Load and display current image
+    image_path = os.path.join("frames", current_image)
+    img = Image.open(image_path)
+    self.ax_img.imshow(img)
+    self.ax_img.axis('off')
+    self.ax_img.set_title(f"Image {self.current_index + 1}/{len(self.image_files)}\n"
+                   f"Filename: {current_image}\n"
+                   f"LLM Evaluation: {llm_eval}\n"
+                   f"LLM Reason: {reason[:300]}...\n"
+                   f"Press 'n' for No Suctioning, 'o' for Oral Suctioning, or 't' for Tracheal Suctioning")  # Show first 300 chars of reason
+
+    plt.draw()
+
+def on_key_press(self, event):
+    if event.key in ['n', 'o', 't'] and self.current_index &lt; len(self.image_files):
+        current_image = self.image_files[self.current_index]
+        if event.key == 'n':
+            self.results[current_image] = 'No Suctioning'
+        elif event.key == 'o':
+            self.results[current_image] = 'Oral Suctioning'
+        elif event.key == 't':
+            self.results[current_image] = 'Tracheal Suctioning'
+        self.current_index += 1
+        if self.current_index &lt; len(self.image_files):
+            self.display_current_image()
+        plt.draw()
+
+def save_results(self):
+    # Convert results to DataFrame and save as TSV
+    df = pd.DataFrame.from_dict(self.results, orient='index', columns=['human_evaluation'])
+    df.index.name = 'Image'
+    df = df.sort_index()  # Sort by filename
+    df.to_csv('human_result.tsv', sep='\t')
+    print(f"\nResults saved to human_result.tsv")
+    print(f"Evaluated {len(self.results)} images")
+</code></pre>
+<p>```</p>
+<h2>Results Analysis</h2>
+<h3>Performance Metrics</h3>
+<ul>
+<li>Total Images: 190</li>
+<li>Overall Accuracy: 58.42%</li>
+<li>Number of Disagreements: 79</li>
+</ul>
+<h3>Classification Report</h3>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.875 | 0.647 | 0.744 | 119 |
+| Oral Suctioning | 0.783 | 0.333 | 0.468 | 54 |
+| Tracheal Suctioning | 0.203 | 0.941 | 0.333 | 17 |</p>
+<h3>Confusion Matrix</h3>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix.png" /></p>
+<h2>Image Analysis Examples</h2>
+<h3>Correct No Suctioning Detection</h3>
+<p><strong>Image</strong>: <code>Suctioning (National Tracheostomy Safety Project)_frame_32.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified no suctioning
+- <strong>LLM Reasoning</strong>: {}...
+- <strong>Key Features</strong>: Absence of suctioning equipment or procedure</p>
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_38.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified no suctioning
+- <strong>LLM Reasoning</strong>: {}...
+- <strong>Key Features</strong>: Absence of suctioning equipment or procedure</p>
+<h3>Correct Oral Suctioning Detection</h3>
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_84.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified oral suctioning
+- <strong>LLM Reasoning</strong>: {'observation': '<strong>\n\nThe image shows a person\'s hand holding a clear suction device with a long, thin tube attached to it. The tube is being inserted into the mouth of a mannequin head. The mannequ...
+- </strong>Key Features**: Dental setting, oral cavity access, wide-bore suction tools</p>
+<p><strong>Image</strong>: <code>#9 How to perform oral suctioning_frame_88.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified oral suctioning
+- <strong>LLM Reasoning</strong>: {'observation': "<strong>\n\nThe image depicts a baby's head and neck with a tube being inserted into the mouth. A hand is visible holding the tube, and the baby appears to be lying on a white surface with ...
+- </strong>Key Features**: Dental setting, oral cavity access, wide-bore suction tools</p>
+<h3>Correct Tracheal Suctioning Detection</h3>
+<p><strong>Image</strong>: <code>Suctioning (National Tracheostomy Safety Project)_frame_25.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified tracheal suctioning
+- <strong>LLM Reasoning</strong>: {'observation': '<strong>\nThe patient is lying in a hospital bed, with a healthcare professional standing next to them. The healthcare professional is wearing blue scrubs and latex gloves, and is holding a...
+- </strong>Key Features**: Tracheostomy access, sterile catheter, supine positioning</p>
+<p><strong>Image</strong>: <code>Suctioning (National Tracheostomy Safety Project)_frame_24.jpg</code>
+- <strong>Evaluation</strong>: Both human and LLM correctly identified tracheal suctioning
+- <strong>LLM Reasoning</strong>: {'observation': 'A woman lying in a hospital bed with a tube inserted into her neck, and a medical professional standing beside her.', 'evidence': "The tube inserted into the woman's neck, the medical...
+- <strong>Key Features</strong>: Tracheostomy access, sterile catheter, supine positioning</p>
+<h3>Notable Disagreements</h3>
+<p><strong>Image</strong>: <code>Oral suctioning_frame_4.jpg</code>
+- <strong>Human Evaluation</strong>: No Suctioning
+- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+- <strong>LLM Reasoning</strong>: {}...
+- <strong>Analysis of Disagreement</strong>: Misclassification between No Suctioning and Tracheal Suctioning</p>
+<p><strong>Image</strong>: <code>Oral suctioning_frame_8.jpg</code>
+- <strong>Human Evaluation</strong>: Oral Suctioning
+- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+- <strong>LLM Reasoning</strong>: {'observation': "<strong> The image shows a woman in a blue shirt and black pants, wearing gloves and a mask, standing next to a hospital bed with a mannequin inside. The woman is holding a suction catheter...
+- </strong>Analysis of Disagreement**: Misclassification between Oral Suctioning and Tracheal Suctioning</p>
+<p><strong>Image</strong>: <code>Performing Oropharyngeal Suctioning_frame_1.jpg</code>
+- <strong>Human Evaluation</strong>: No Suctioning
+- <strong>LLM Evaluation</strong>: Tracheal Suctioning
+- <strong>LLM Reasoning</strong>: {}...
+- <strong>Analysis of Disagreement</strong>: Misclassification between No Suctioning and Tracheal Suctioning</p>
+<h2>Per-Video Analysis</h2>
+<h3>Suctioning (National Tracheostomy Safety Project)</h3>
+<p><img alt="Representative Frame" src="frames/Suctioning (National Tracheostomy Safety Project)_frame_10.jpg" /></p>
+<p><em>Representative frame showing tracheal suctioning</em></p>
+<ul>
+<li><strong>Total Frames</strong>: 41</li>
+<li><strong>Accuracy</strong>: 80.49%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.944 | 0.708 | 0.810 | 24 |
+| Oral Suctioning | No samples | No samples | No samples | 0 |
+| Tracheal Suctioning | 0.762 | 0.941 | 0.842 | 17 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_Suctioning_(National_Tracheostomy_Safety_Project).png" /></p>
+<h3>Performing Oropharyngeal Suctioning</h3>
+<p><img alt="Representative Frame" src="frames/Performing Oropharyngeal Suctioning_frame_24.jpg" /></p>
+<p><em>Representative frame showing oral suctioning</em></p>
+<ul>
+<li><strong>Total Frames</strong>: 43</li>
+<li><strong>Accuracy</strong>: 65.12%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.933 | 0.848 | 0.889 | 33 |
+| Oral Suctioning | 0.000 | 0.000 | 0.000 | 10 |
+| Tracheal Suctioning | No samples | No samples | No samples | 0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_Performing_Oropharyngeal_Suctioning.png" /></p>
+<h3>#9 How to perform oral suctioning</h3>
+<p><img alt="Representative Frame" src="frames/#9 How to perform oral suctioning_frame_19.jpg" /></p>
+<p><em>Representative frame showing oral suctioning</em></p>
+<ul>
+<li><strong>Total Frames</strong>: 89</li>
+<li><strong>Accuracy</strong>: 49.44%</li>
+</ul>
+<h4>Classification Report</h4>
+<p>| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|---------|-----------|----------|
+| No Suctioning | 0.794 | 0.540 | 0.643 | 50 |
+| Oral Suctioning | 0.850 | 0.436 | 0.576 | 39 |
+| Tracheal Suctioning | No samples | No samples | No samples | 0 |</p>
+<h4>Confusion Matrix</h4>
+<p><img alt="Confusion Matrix" src="assets/confusion_matrix_#9_How_to_perform_oral_suctioning.png" /></p>
+<h2>Future Work</h2>
+<ol>
+<li><strong>Model Improvements</strong></li>
+<li>Enhance distinction between oral and tracheal suctioning</li>
+<li>Improve detection of suctioning equipment and setup</li>
+<li>
+<p>Add confidence scoring for predictions</p>
+</li>
+<li>
+<p><strong>Data Collection</strong></p>
+</li>
+<li>Balance dataset across all three suctioning types</li>
+<li>Include more examples of tracheal suctioning</li>
+<li>Add temporal context between frames</li>
+</ol>
+<h2>Project Files</h2>
+<h3>Core Components</h3>
+<ul>
+<li><strong>llama32_detect.py</strong>: Vision model implementation</li>
+<li><strong>human_evaluation.py</strong>: Manual annotation interface</li>
+<li><strong>calculate_accuracy.py</strong>: Performance analysis</li>
+<li><strong>report.py</strong>: Analysis report generation</li>
+</ul>
+<h3>Output Files</h3>
+<ul>
+<li><strong>llm_result.tsv</strong>: Model predictions and reasoning</li>
+<li><strong>human_result.tsv</strong>: Human annotations</li>
+<li><strong>disagreements.tsv</strong>: Cases where model and human differ</li>
+<li><strong>accuracy_results.txt</strong>: Detailed performance metrics</li>
+</ul>
+<h2>LLM Detection Pipeline</h2>
+<h3>Model Configuration</h3>
+<p><code>python
+model_id = 'meta-llama/Llama-3.2-11B-Vision-Instruct'
+model = MllamaForConditionalGeneration.from_pretrained(
+    model_id,
+    torch_dtype=torch.bfloat16
+)</code></p>
+<h3>Prompt Engineering</h3>
+<p>The model uses a carefully crafted prompt with three key components:</p>
+<ol>
+<li>
+<p><strong>Role Definition</strong>
+<code>You are a medical image analysis expert. Your task is to carefully analyze the image and determine if it shows a patient undergoing suctioning using a tube. Classify the scenario into one of the following categories: No Suctioning, Oral Suctioning (dental), or Tracheal Suctioning (throat/covid).</code></p>
+</li>
+<li>
+<p><strong>Definitions and Criteria</strong>
+```</p>
+</li>
+<li>Oral Suctioning:</li>
+<li>Performed exclusively by licensed dentists or dental assistants</li>
+<li>Suction device must be actively placed inside patient's oral cavity</li>
+<li>Specifically for removal of oral fluids during dental procedures</li>
+<li>Patient must be seated upright in a dental chair</li>
+<li>Equipment: Wide-bore dental suction tools (&gt;8mm diameter)</li>
+<li>
+<p>Caregiver position: Within 45 degrees of patient's front, at oral level</p>
+</li>
+<li>
+<p>Tracheal Suctioning:</p>
+</li>
+<li>Performed only by licensed healthcare professionals</li>
+<li>Sterile catheter must be actively inserted through tracheostomy opening</li>
+<li>Exclusively for clearing respiratory secretions from airways</li>
+<li>Patient must be supine or at maximum 30 degree incline</li>
+<li>Equipment: Sterile flexible catheter (10-14 French/3.3-4.7mm diameter)</li>
+<li>
+<p>Caregiver position: Standing at head of bed, within 30cm of patient's head
+```</p>
+</li>
+<li>
+<p><strong>Analysis Framework</strong>
+The model evaluates each image using four key aspects:</p>
+</li>
+<li>
+<p><strong>Patient and Caregiver Assessment</strong></p>
+</li>
+<li>Patient presence and positioning</li>
+<li>Healthcare provider identification</li>
+<li>
+<p>Provider positioning relative to patient</p>
+</li>
+<li>
+<p><strong>Equipment Verification</strong></p>
+</li>
+<li>Suction device type and size</li>
+<li>Active insertion verification</li>
+<li>
+<p>Proper equipment usage</p>
+</li>
+<li>
+<p><strong>Procedure Context</strong></p>
+</li>
+<li>Clinical setting assessment</li>
+<li>Patient positioning</li>
+<li>
+<p>Supporting medical equipment</p>
+</li>
+<li>
+<p><strong>Active Suctioning Indicators</strong></p>
+</li>
+<li>Ongoing procedure verification</li>
+<li>Proper technique assessment</li>
+<li>Supporting device presence</li>
+</ol>
+<h3>Processing Pipeline</h3>
+<p><code>mermaid
+graph TD
+    A[Input Image] --&gt; B[Image Processing]
+    B --&gt; C[LLaMA Vision Model]
+    C --&gt; D[Structured Analysis]
+    D --&gt; E[Classification]
+    E --&gt; F[Detailed Reasoning]</code></p>
+<h3>Output Format</h3>
+<p>The model generates a structured output with three components:
+1. Detailed analysis of the medical scene
+2. Classification into one of three categories:
+   - No Suctioning
+   - Oral Suctioning
+   - Tracheal Suctioning
+3. Supporting reasoning with key observations</p>
+<p>Example output:
+```
+<strong>Analysis of the Image</strong>
+The image shows a medical professional in PPE standing at the head of a hospital bed...</p>
+<p><strong>Key Observations</strong>
+- Patient positioning: Supine at 30° incline
+- Equipment: Sterile catheter (4mm diameter)
+- Procedure: Active insertion through tracheostomy
+- Setting: ICU with monitoring equipment</p>
+<p><strong>Classification</strong>
+Tracheal Suctioning
+```</p>
