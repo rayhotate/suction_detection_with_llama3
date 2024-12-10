@@ -159,7 +159,6 @@ Key findings from the analysis:
 4. **Key Challenges**
    - Difficulty distinguishing between oral and tracheal suctioning procedures
    - Inconsistent performance across different video sources
-   - Lower accuracy in animated, CG, or non-standard clinical settings
 
 5. **Notable Strengths**
    - Strong ability to identify absence of suctioning (0.88 precision)
